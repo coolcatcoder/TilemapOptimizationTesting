@@ -152,8 +152,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11a80cb076d812e498d997399da3524a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TilemapSize: 5000
+  TilemapSize: 20000
   Trials: 50
+  Pos:
+    x: 5000
+    y: 5000
+  GenerationWidth: 3000
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
