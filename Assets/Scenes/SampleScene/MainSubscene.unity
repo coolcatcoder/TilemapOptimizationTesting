@@ -157,7 +157,8 @@ MonoBehaviour:
   Pos:
     x: 5000
     y: 5000
-  GenerationWidth: 3000
+  GenerationWidth: 200
+  ChunkWidth: 200
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
