@@ -86,6 +86,8 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     {
         ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
+        CheckForCollisions(ref PlayerStats);
+
         if (PlayerStats.HasMoved)
         {
             ReplaceMesh = true; // this is very slow, instead just grab the read only mesh data, and the write only mesh data, then set the write only mesh data equal to the read only mesh data, but with updated player pos
@@ -334,7 +336,14 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
                     int2 WorldPos = WorldPosStart + PosFromIndex(BI, ChunkWidth); // important lesson here, the chunk is our grid, so we use chunk width instead of chunk grid width
                     int BlockIndex = BlockIndexStart + BI;
 
-                    BlockType TypeInfo = BlockTypes.Value[TilemapArray[BlockIndex]];
+                    byte TypeIndex = TilemapArray[BlockIndex];
+
+                    if (TypeIndex == 0) // 0 is empty space, don't try to render it, note not -1 because byte's min value is 0
+                    {
+                        continue;
+                    }
+
+                    BlockType TypeInfo = BlockTypes.Value[TypeIndex];
 
                     //Debug.Log(WorldBlockPos);
 
@@ -347,7 +356,8 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             }
         }
 
-        int RenderAmount = ChunksToRender * ChunkWidthSquared;
+        //int RenderAmount = ChunksToRender * ChunkWidthSquared;
+        int RenderAmount = BlocksToRender.Length;
 
         TilemapMeshData.SetVertexBufferParams(RenderAmount * 4, VertexAttributes);
         TilemapMeshData.SetIndexBufferParams(RenderAmount * 6, IndexFormat.UInt32);
@@ -457,6 +467,58 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             Indices[IndexStart + 3] = VertexStart + 1;
             Indices[IndexStart + 4] = VertexStart + 3;
             Indices[IndexStart + 5] = VertexStart + 2;
+        }
+    }
+
+    #endregion
+
+    #region Collision Stuff
+
+    //[BurstCompile]
+    public void CheckForCollisions(ref Stats PlayerStats)
+    {
+        float2 PlayerPos = PlayerStats.Pos;
+
+        int2 ClosestBlockPos = (int2)math.round(PlayerPos);
+
+        Debug.Log(CheckForCollision(PlayerPos, ClosestBlockPos));
+    }
+
+    public bool CheckForCollision(float2 PlayerPos, int2 BlockPos) // highly likely this isn't correct
+    {
+        int2 ChunkPos = ChunkPosFromBlockPos(BlockPos, ChunkWidth);
+        int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+        int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
+
+        int2 WorldPosStart = PosFromIndex(BlockIndexStart, BlockGridWidth);
+
+        int2 LocalPos = BlockPos - WorldPosStart;
+
+        int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
+        
+        int BlockIndex = BlockIndexStart + LocalIndex;
+
+        byte BlockTypeIndex = TilemapArray[BlockIndex];
+
+        if (BlockTypeIndex == 0)
+        {
+            return false;
+        }
+
+        // this will change to check if the player has enough strength and stuff, but for now, if the block is not nothing, then the block is solid
+
+        if ( // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection so good
+            PlayerPos.x < BlockPos.x + 1 &&
+            PlayerPos.x + 1 > BlockPos.x &&
+            PlayerPos.y < BlockPos.y + 1 &&
+            PlayerPos.y + 1 > BlockPos.y
+            )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 

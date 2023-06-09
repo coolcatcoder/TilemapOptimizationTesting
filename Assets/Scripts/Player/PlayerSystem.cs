@@ -22,8 +22,16 @@ public partial struct PlayerSystem : ISystem//, ISystemStartStop
 
     public void OnUpdate(ref SystemState state)
     {
-        InputData InputInfo = SystemAPI.GetSingleton<InputData>();
+        ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
         ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
+
+        PlayerStats.PreviousPos = PlayerStats.Pos;
+
+        if (InputInfo.SprintPressed)
+        {
+            InputInfo.SprintPressed = false;
+            PlayerStats.Sprinting = !PlayerStats.Sprinting; // is there a more efficient way of writing this lol?
+        }
 
         float MaxSpeed;
 
@@ -36,7 +44,7 @@ public partial struct PlayerSystem : ISystem//, ISystemStartStop
             MaxSpeed = PlayerStats.WalkSpeed;
         }
 
-        PlayerStats.Speed = math.lerp(0, MaxSpeed, math.clamp(InputInfo.TimeHeldFor, 0, 1));
+        PlayerStats.Speed = math.lerp(0, MaxSpeed, math.clamp(InputInfo.TimeMovementInputHeldFor, 0, 1));
 
         if (PlayerStats.Speed == 0)
         {

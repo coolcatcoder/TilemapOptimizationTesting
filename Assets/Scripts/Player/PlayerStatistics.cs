@@ -21,6 +21,7 @@ public class PlayerStatisticsBaker : Baker<PlayerStatistics>
 public struct Stats : IComponentData
 {
     public float2 Pos; // Not float 3 cause not including depth. I think this is good?
+    public float2 PreviousPos; // Position on the previous frame
     public uint Health; // perhaps should be int?
     public int Stamina;
     public bool Sprinting;

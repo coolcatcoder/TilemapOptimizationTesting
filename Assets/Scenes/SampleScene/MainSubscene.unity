@@ -272,12 +272,15 @@ MonoBehaviour:
     Pos:
       x: 0
       y: 0
+    PreviousPos:
+      x: 0
+      y: 0
     Health: 50
     Stamina: 50
     Sprinting: 0
     Speed: 0
-    SprintSpeed: 0.3
-    WalkSpeed: 0.15
+    SprintSpeed: 9
+    WalkSpeed: 4
     HasMoved: 1
 --- !u!4 &1496029463
 Transform:

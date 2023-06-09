@@ -11,6 +11,7 @@ public partial class InputManager : SystemBase // Stolen from SmallSight hence t
     {
         EntityManager.AddComponent<InputData>(EntityManager.CreateEntity());
         UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[0].AddListener(ThrowMovement);
+        UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[13].AddListener(ThrowSprint);
         //UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[11].AddListener(ThrowTeleport);
         //UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[12].AddListener(ThrowCamera);
         //UnityEngine.Object.FindObjectOfType<PlayerInput>().actionEvents[13].AddListener(ThrowYMove);
@@ -24,9 +25,9 @@ public partial class InputManager : SystemBase // Stolen from SmallSight hence t
     {
         ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
 
-        if (InputInfo.Held)
+        if (InputInfo.MovementInputHeld)
         {
-            InputInfo.TimeHeldFor += SystemAPI.Time.DeltaTime;
+            InputInfo.TimeMovementInputHeldFor += SystemAPI.Time.DeltaTime;
         }
     }
 
@@ -36,22 +37,26 @@ public partial class InputManager : SystemBase // Stolen from SmallSight hence t
 
         if (context.canceled)
         {
-            InputInfo.TimeHeldFor = 0;
+            InputInfo.TimeMovementInputHeldFor = 0;
         }
 
-        InputInfo.Held = !context.canceled;
-        InputInfo.Pressed = !context.canceled;
+        InputInfo.MovementInputHeld = !context.canceled;
         InputInfo.Movement = context.ReadValue<Vector2>();
+    }
+
+    public void ThrowSprint(InputAction.CallbackContext context)
+    {
+        ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
+
+        InputInfo.SprintPressed = !context.canceled;
     }
 }
 
 public struct InputData : IComponentData
 {
-    public bool Pressed; // non-smallsight comment: shouldn't this be MovementPressed and have one Pressed variable for each input?
-    public bool Held;
-    public float TimeHeldFor;
+    public bool MovementInputHeld;
+    public float TimeMovementInputHeldFor;
     public float2 Movement;
-    //public float2 YMovement;
-    //public bool Teleport;
-    //public float2 CameraMovement;
+
+    public bool SprintPressed;
 }
