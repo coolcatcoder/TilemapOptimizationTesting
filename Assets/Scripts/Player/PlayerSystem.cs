@@ -5,20 +5,20 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Burst;
 
-public partial struct PlayerSystem : ISystem, ISystemStartStop
+public partial struct PlayerSystem : ISystem//, ISystemStartStop
 {
-    //[BurstCompile]
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<InputData>();
         state.RequireForUpdate<Stats>();
     }
 
-    public void OnStartRunning(ref SystemState state)
-    {
-        Object.FindObjectOfType<Camera>().transparencySortMode = TransparencySortMode.CustomAxis;
-        Object.FindObjectOfType<Camera>().transparencySortAxis = new float3(0, 0, -1);
-    }
+    //public void OnStartRunning(ref SystemState state)
+    //{
+    //    Object.FindObjectOfType<Camera>().transparencySortMode = TransparencySortMode.CustomAxis;
+    //    Object.FindObjectOfType<Camera>().transparencySortAxis = new float3(0, 0, -1);
+    //}
 
     public void OnUpdate(ref SystemState state)
     {
@@ -45,15 +45,15 @@ public partial struct PlayerSystem : ISystem, ISystemStartStop
 
         PlayerStats.HasMoved = true; // I think?
 
-        PlayerStats.Pos += InputInfo.Movement * PlayerStats.Speed;
+        PlayerStats.Pos += InputInfo.Movement * PlayerStats.Speed * SystemAPI.Time.DeltaTime;
 
         PlayerStats.Pos = math.clamp(PlayerStats.Pos, 0, float.MaxValue);
 
         Object.FindObjectOfType<Camera>().transform.position = new float3(PlayerStats.Pos, -10);
     }
 
-    public void OnStopRunning(ref SystemState state)
-    {
+    //public void OnStopRunning(ref SystemState state)
+    //{
 
-    }
+    //}
 }

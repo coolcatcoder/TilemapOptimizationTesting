@@ -34,34 +34,15 @@ public partial class InputManager : SystemBase // Stolen from SmallSight hence t
     {
         ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
 
+        if (context.canceled)
+        {
+            InputInfo.TimeHeldFor = 0;
+        }
+
         InputInfo.Held = !context.canceled;
         InputInfo.Pressed = !context.canceled;
-        InputInfo.TimeHeldFor = 0;
         InputInfo.Movement = context.ReadValue<Vector2>();
     }
-
-    //public void ThrowTeleport(InputAction.CallbackContext context)
-    //{
-    //    ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
-    //    InputInfo.Teleport = !context.canceled;
-    //    //Debug.Log("telleeeeport????");
-    //}
-
-    //public void ThrowCamera(InputAction.CallbackContext context)
-    //{
-    //    ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
-    //    InputInfo.CameraMovement = context.ReadValue<Vector2>();
-    //}
-
-    //public void ThrowYMove(InputAction.CallbackContext context)
-    //{
-    //    ref var InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
-
-    //    InputInfo.Held = !context.canceled;
-    //    InputInfo.Pressed = !context.canceled;
-    //    InputInfo.TimeHeldFor = 0;
-    //    InputInfo.YMovement = context.ReadValue<Vector2>();
-    //}
 }
 
 public struct InputData : IComponentData
