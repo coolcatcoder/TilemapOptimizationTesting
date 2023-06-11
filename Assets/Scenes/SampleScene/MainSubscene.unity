@@ -269,6 +269,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   StartingStats:
+    Size:
+      x: 0.7
+      y: 0.7
     Pos:
       x: 0
       y: 0
