@@ -33,15 +33,18 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     float SpriteWidth;
     float SpriteHeight;
 
+    Random SafePosRandom;
+
     #region ISystem Methods
 
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<TilemapSettingsData>();
         state.RequireForUpdate<Stats>();
     }
 
-    //[BurstCompile]
+    [BurstCompile]
     public void OnStartRunning(ref SystemState state)
     {
         ref var TilemapSettingsInfo = ref SystemAPI.GetSingletonRW<TilemapSettingsData>().ValueRW;
@@ -50,8 +53,12 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         ChunkWidth = TilemapSettingsInfo.ChunkWidth;
         ChunkWidthSquared = ChunkWidth * ChunkWidth;
+
         BlockGridWidth = TilemapSettingsInfo.TilemapSize; // why is it called tilemap size???? ughhhhh
+
         Seed = (uint)SystemAPI.Time.ElapsedTime; // so sketchy
+        SafePosRandom = Random.CreateFromIndex(Seed);
+
         SpriteWidth = TilemapSettingsInfo.SpriteWidth;
         SpriteHeight = TilemapSettingsInfo.SpriteHeight;
 
@@ -59,46 +66,29 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         TilemapArray = new NativeArray<byte>(TilemapSettingsInfo.TilemapSize * TilemapSettingsInfo.TilemapSize, Allocator.Persistent);
         ChunksGenerated = new NativeArray<bool>(ChunkGridWidth * ChunkGridWidth, Allocator.Persistent);
-        //Debug.Log(ChunksGenerated.Length);
         BlocksToRender = new NativeList<BlockMeshElement>(TilemapSettingsInfo.MaxBlocksToRender, Allocator.Persistent);
 
         VertexAttributes = new NativeArray<VertexAttributeDescriptor>(2, Allocator.Persistent);
         VertexAttributes[0] = new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3);
         VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2);
 
-        //System.Diagnostics.Stopwatch Watch = new();
-        //Watch.Start();
-        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
-        //{
-        //    GenerateChunk(new int2(0,0)).Complete();
-        //}
-        //Watch.Stop();
-        //Debug.Log("Weird Chunks: " + Watch.Elapsed / TilemapSettingsInfo.Trials);
-
         SystemAPI.GetSingletonRW<Stats>().ValueRW.Pos = FindSafePos();
 
-        GenerateChunk(new int2(0, 0)).Complete();
-        GenerateChunk(new int2(1, 0)).Complete();
-        GenerateChunk(new int2(1, 1)).Complete();
-
-        //Debug.Log(FindSafePos());
-
         ReplaceMesh = true;
-
-        //int2 TestingWorldPos = new int2(5, 3);
-        //int2 TestingChunkPos = ChunkPosFromBlockPos(TestingWorldPos, ChunkWidth);
-
-        //Debug.Log($"WorldPos {TestingWorldPos} is in ChunkPos {TestingChunkPos} which is ChunkIndex {IndexFromPos(TestingChunkPos, ChunkGridWidth)}");
     }
 
     public void OnUpdate(ref SystemState state)
     {
         ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
+        Debug.Log(PlayerStats.HasMoved);
+
         CheckForCollisions(ref PlayerStats);
 
         if (PlayerStats.HasMoved)
         {
+            PlayerStats.HasMoved = false;
+
             ReplaceMesh = true; // this is very slow, instead just grab the read only mesh data, and the write only mesh data, then set the write only mesh data equal to the read only mesh data, but with updated player pos
             BlocksToRender.Add(new BlockMeshElement
             {
@@ -106,6 +96,25 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
                 UV = new float2(0,0), // player is always first sprite? This is a bad idea
                 Size = PlayerStats.Size
             });
+
+            //new JobHandle().Complete();
+
+            //GenerateChunksAroundPlayer((int2)PlayerStats.Pos); //Why the hell does this cost so much?????
+
+            //int2 PlayerChunkPosTesting = ChunkPosFromBlockPos((int2)PlayerStats.Pos, ChunkWidth);
+
+            //if (!ChunksGenerated[IndexFromPos(PlayerChunkPosTesting, ChunkGridWidth)])
+            //{
+            //    //GenerateChunk(PlayerChunkPosTesting).Complete();
+            //    Debug.Log("pain");
+            //}
+
+            //PlayerChunkPosTesting.y -= 1;
+
+            //if (!ChunksGenerated[IndexFromPos(PlayerChunkPosTesting, ChunkGridWidth)])
+            //{
+            //    //GenerateChunk(PlayerChunkPosTesting).Complete();
+            //}
         }
 
         if (!ReplaceMesh)
@@ -113,8 +122,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             return;
         }
 
-        //int PlayerChunk = ChunkIndexFromWorldPos((int2)PlayerStats.Pos, ChunkWidth); // is casting to int2 a good idea? Should we round instead?
-        //int PlayerChunk = ChunkIndexFromBlockIndex(IndexFromPos((int2)PlayerStats.Pos, BlockGridWidth), ChunkWidthSquared);
         int2 PlayerChunkPos = ChunkPosFromBlockPos((int2)PlayerStats.Pos, ChunkWidth);
         int PlayerChunkIndex = IndexFromPos(PlayerChunkPos, ChunkGridWidth);
 
@@ -134,9 +141,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         ref var TilemapBounds = ref SystemAPI.GetComponentRW<RenderBounds>(TilemapEntity).ValueRW;
 
-        MeshUpdateFlags MeshFlags = MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontResetBoneBounds | MeshUpdateFlags.DontValidateIndices; // not tested yet
+        MeshUpdateFlags MeshFlags = MeshUpdateFlags.DontResetBoneBounds | MeshUpdateFlags.DontValidateIndices; // very minor performance save lol
 
-        Mesh.ApplyAndDisposeWritableMeshData(GenerateMesh(), TilemapMeshManaged, MeshUpdateFlags.Default);
+        Mesh.ApplyAndDisposeWritableMeshData(GenerateMesh(), TilemapMeshManaged, MeshFlags);
 
         var SubMeshInfo = TilemapMeshManaged.GetSubMesh(0);
         TilemapBounds.Value = new AABB()
@@ -146,14 +153,13 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         };
     }
 
+    [BurstCompile]
     public void OnStopRunning(ref SystemState state)
     {
         TilemapArray.Dispose();
         ChunksGenerated.Dispose();
         BlocksToRender.Dispose();
         VertexAttributes.Dispose();
-
-        //UnsafeUtility.Free(RootNode, Allocator.Persistent); // only works if there is one node
     }
 
     #endregion
@@ -190,87 +196,48 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         return ChunkPos * ChunkWidth;
     }
 
-    // add functions to go from chunk pos to world pos, and from world pos to chunk pos
+    // add function to get chunk index from block index
 
-    // add function to go from chunk index to block index, but not the other way round yet, until my math improves
+    public static int BlockIndexFromChunkIndex(int ChunkIndex, int ChunkWidthSquared)
+    {
+        return ChunkIndex * ChunkWidthSquared;
+    }
 
     public static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct
     {
         return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
     }
 
-    // the 2 functions below cannot exist as far as I know
-
-    //public static int BlockIndexFromChunkIndex(int ChunkIndex, int ChunkWidthSquared)
-    //{
-    //    return ChunkIndex * ChunkWidthSquared;
-    //}
-
-    //public static int ChunkIndexFromBlockIndex(int BlockIndex, int ChunkWidthSquared)
-    //{
-    //    return BlockIndex / ChunkWidthSquared;
-    //}
-
-    //// below are bad functions, very very scary
-
-    //[System.Obsolete]
-    //public static int2 ChunkPosFromWorldPos(int2 WorldPos, int ChunkWidth) // confirmed correct
-    //{
-    //    return WorldPos/ChunkWidth;
-    //}
-
-    //[System.Obsolete]
-    //public static int ChunkIndexFromChunkPos(int2 ChunkPos, int ChunkGridWidth)
-    //{
-    //    return ChunkPos.y * ChunkGridWidth + ChunkPos.x;
-    //}
-
-    //[System.Obsolete]
-    //public static int ChunkIndexFromWorldPos(int2 WorldPos, int ChunkGridWidth) // wrong
-    //{
-    //    return WorldPos.y * ChunkGridWidth + WorldPos.x;
-    //}
-
-    //[System.Obsolete]
-    //public static int GetChunkGridWidth(int GridWidth, int ChunkWidth)
-    //{
-    //    return GridWidth / ChunkWidth;
-    //}
-
-    //[System.Obsolete]
-    //public static int2 LocalPosFromLocalBlockIndex(int LocalBlockIndex, int ChunkWidth)
-    //{
-    //    return new int2(LocalBlockIndex % ChunkWidth, LocalBlockIndex / ChunkWidth);
-    //}
-
-    //[System.Obsolete]
-    //public static int2 WorldPosFromChunkIndex(int ChunkIndex, int BlockGridWidth)
-    //{
-    //    return new int2(ChunkIndex % BlockGridWidth, ChunkIndex / BlockGridWidth);
-    //}
-
     #endregion
 
     #region Generation Functions and Jobs
 
+    //[BurstCompile]
+    public void GenerateChunksAroundPlayer(int2 PlayerPos)
+    {
+        int2 PlayerChunkPos = ChunkPosFromBlockPos(PlayerPos, ChunkWidth);
+
+        for (int i = 0; i < 9; i++)
+        {
+            int2 OffsetPos = PosFromIndex(i, 3) - 1;
+
+            if (!ChunksGenerated[IndexFromPos(OffsetPos+PlayerChunkPos, ChunkGridWidth)])
+            {
+                GenerateChunk(PlayerChunkPos + OffsetPos).Complete();
+            }
+        }
+    }
+
     public int2 FindSafePos()
     {
-        Random Rand = Random.CreateFromIndex(Seed);
-
-        int2 ChunkPos = (int2)Rand.NextUInt2((uint)ChunkGridWidth);
-        Debug.Log(ChunkPos);
+        int2 ChunkPos = SafePosRandom.NextInt2(ChunkGridWidth);
 
         int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
 
         GenerateChunk(ChunkPos).Complete();
 
-        int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
-
-        //int2 WorldPosStart = PosFromIndex(BlockIndexStart, BlockGridWidth);
-
-        int2 WorldPosStart = ChunkPos * ChunkWidth;
-
-        Debug.Log(WorldPosStart);
+        int BlockIndexStart = BlockIndexFromChunkIndex(ChunkIndex, ChunkWidthSquared);
+        int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
 
         for (int BI = 0; BI < ChunkWidthSquared; BI++)
         {
@@ -293,22 +260,15 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         return (byte)Rand.NextInt(0,AmountOfBlockTypes);
     }
 
-    //[BurstCompile]
-    public JobHandle GenerateChunk(int2 ChunkPos, JobHandle Dependency = new())
+    public JobHandle GenerateChunk(int2 ChunkPos, JobHandle Dependency = new()) // do we want to burst compile this?
     {
-        Debug.Log($"starting generation of chunk {ChunkPos.x}, {ChunkPos.y}");
-
         int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
-        Debug.Log($"chunk index {ChunkIndex}");
 
         int2 BlockPos = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
-        Debug.Log($"block pos {BlockPos.x}, {BlockPos.y}");
 
-        int BlockIndex = ChunkIndex * ChunkWidthSquared; // this works?????
+        int BlockIndex = BlockIndexFromChunkIndex(ChunkIndex, ChunkWidthSquared);
 
         ChunksGenerated[ChunkIndex] = true;
-
-        //int BlockIndex = BlockIndexFromChunkIndex(ChunkIndex, ChunkWidthSquared);
 
         var ChunkGeneratorJob = new ChunkGenerator
         {
@@ -317,13 +277,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             GridWidth = BlockGridWidth,
             ChunkWidth = ChunkWidth,
             ChunkWorldPos = BlockPos,
-            //ChunkWorldPos = PosFromIndex(BlockIndex, BlockGridWidth),
-            //ChunkWorldPos = WorldPosFromChunkIndex(ChunkIndex, BlockGridWidth),
-            Seed = Seed,
+            Seed = Seed + (uint)ChunkIndex,
             AmountOfBlockTypes = (byte)BlockTypes.Value.Length
         };
-
-        Debug.Log($"stopping generation of chunk {ChunkPos.x}, {ChunkPos.y}");
 
         return ChunkGeneratorJob.ScheduleParallel(ChunkWidthSquared, 64, Dependency);
     }
@@ -348,7 +304,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         public void Execute(int i)
         {
-            //int2 BlockLocalPos = new int2(i % ChunkWidth, i / ChunkWidth);
             int2 BlockLocalPos = PosFromIndex(i, ChunkWidth);
             int TrueIndex = StartingIndex + i;
 
@@ -384,19 +339,12 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
                 int2 ChunkPos = PosFromIndex(CI, ChunkGridWidth);
 
-                //Debug.Log(WorldPosFromChunkIndex(CI, BlockGridWidth));
+                int BlockIndexStart = BlockIndexFromChunkIndex(CI, ChunkWidthSquared); // bad naming scheme
 
-                //int BlockIndexStart = BlockIndexFromChunkIndex(CI, ChunkWidthSquared); // bad naming scheme
-                int BlockIndexStart = CI * ChunkWidthSquared; // I don't get this at all
-
-                //int2 WorldChunkPos = WorldPosFromChunkIndex(CI, BlockGridWidth);
-                //int2 WorldPosStart = PosFromIndex(BlockIndexStart, BlockGridWidth); // OH HELL OH HELL THIS IS NOT GOOD also bad naming scheme
-
-                int2 WorldPosStart = ChunkPos * ChunkWidth;
+                int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth); // bad naming scheme
 
                 for (int BI = 0; BI < ChunkWidthSquared; BI++)
                 {
-                    //int2 WorldPos = WorldPosStart + LocalPosFromLocalBlockIndex(BI, ChunkWidth);
                     int2 WorldPos = WorldPosStart + PosFromIndex(BI, ChunkWidth); // important lesson here, the chunk is our grid, so we use chunk width instead of chunk grid width
                     int BlockIndex = BlockIndexStart + BI;
 
@@ -409,8 +357,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
                     BlockType TypeInfo = BlockTypes.Value[TypeIndex];
 
-                    //Debug.Log(WorldBlockPos);
-
                     BlocksToRender.Add(new BlockMeshElement
                     {
                         UV = TypeInfo.UV,
@@ -421,7 +367,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             }
         }
 
-        //int RenderAmount = ChunksToRender * ChunkWidthSquared;
         int RenderAmount = BlocksToRender.Length;
 
         TilemapMeshData.SetVertexBufferParams(RenderAmount * 4, VertexAttributes);
@@ -429,7 +374,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         TilemapMeshData.subMeshCount = 1; // temporary, needs to be replaced by something good that works out how many use what material, but that is pain
 
-        var ProcessMeshData = new ProcessMeshDataJob()
+        var ProcessMeshDataJob = new ProcessMeshData()
         {
             BlockMeshInfo = BlocksToRender,
             Vertices = TilemapMeshData.GetVertexData<Vertex>(),
@@ -438,16 +383,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             SpriteHeight = SpriteHeight
         };
 
-        ProcessMeshData.ScheduleParallel(RenderAmount, 64, new JobHandle()).Complete(); // pass out of function somehow please?
-
-        //Bounds SubMeshBounds = new Bounds() // very bad
-        //{
-        //    center = new float3(0, 0, 0), // not good and not true, same for everything below
-        //    extents = new float3(1000, 1000, 10),
-        //    max = new float3(1000, 1000, 10),
-        //    min = new float3(-1000, -1000, -10),
-        //    size = new float3(2000, 2000, 20)
-        //};
+        ProcessMeshDataJob.ScheduleParallel(RenderAmount, 64, new JobHandle()).Complete(); // pass out of function somehow please?
 
         SubMeshDescriptor SubMeshInfo = new()
         {
@@ -481,7 +417,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    struct ProcessMeshDataJob : IJobFor // doesn't work well and uses old naming scheme of THINGJob instead of just being THING for later use as THINGJob and THINGHandle
+    struct ProcessMeshData : IJobFor // doesn't work well
     {
         [ReadOnly]
         public NativeList<BlockMeshElement> BlockMeshInfo; // don't replace, rather just populate this list from the for loop that checks which chunks exist. Get the uv data and everything from a blob array containing the block types
@@ -494,9 +430,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         [WriteOnly]
         public NativeArray<int> Indices; // why is this not uint????
 
-        //[ReadOnly]
-        //public float2 UVTileHalfSize; // basically x = 1 / UVWidth / 2 , y = 1 / UVHeight / 2     What the hell does this mean?
-
         [ReadOnly]
         public float SpriteWidth;
 
@@ -505,8 +438,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         public void Execute(int i)
         {
-            //var Vertices = OutputMesh.GetVertexData<Vertex>(); Kept so I can understand how to populate
-
             BlockMeshElement BlockInfo = BlockMeshInfo[i];
 
             int VertexStart = i * 4; // if every tile takes up 4 vertices then we use i * 4 to get the correct starting vertex
@@ -523,8 +454,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             UnsafeElementAt(Vertices, VertexStart + 3).Pos = BlockInfo.Position + new float3(-0.5f * BlockInfo.Size.x, -0.5f * BlockInfo.Size.y, 0); // bottom left
             UnsafeElementAt(Vertices, VertexStart + 3).UV = BlockInfo.UV;
-
-            //var Indices = OutputMesh.GetIndexData<int>(); // shouldn't this be uint???
 
             Indices[IndexStart] = VertexStart;
             Indices[IndexStart + 1] = VertexStart + 1;
@@ -548,17 +477,15 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         int2 ClosestBlockPos = (int2)math.round(PlayerPos);
 
-        bool3x3 HasCollided3x3 = new(
-            CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(-1, -1)), CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(-1, 0)), CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(-1, 1)),
-            CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(0, -1)), CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(0, 0)), CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(0, 1)),
-            CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(1, -1)), CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(1, 0)), CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos + new int2(1, 1))
-            );
-
-        bool HasCollided = math.any(new bool3(math.any(HasCollided3x3.c0), math.any(HasCollided3x3.c1), math.any(HasCollided3x3.c2))); // math.any does not support 3x3 sadly
-
-        if (HasCollided)
+        for (int i = 0; i < 9; i++)
         {
-            PlayerStats.Pos = PlayerStats.PreviousPos; // should undo collisions
+            int2 OffsetPos = PosFromIndex(i, 3) - 1;
+
+            if (CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos+OffsetPos))
+            {
+                PlayerStats.Pos = PlayerStats.PreviousPos;
+                return;
+            }
         }
     }
 
@@ -570,8 +497,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
         int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
 
-        //int2 WorldPosStart = PosFromIndex(BlockIndexStart, BlockGridWidth);
-        int2 WorldPosStart = ChunkPos * ChunkWidth;
+        int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
 
         int2 LocalPos = BlockPos - WorldPosStart;
 
@@ -581,14 +507,11 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         byte BlockTypeIndex = TilemapArray[BlockIndex];
 
-        if (BlockTypeIndex == 0)
+        if (BlockTypeIndex == 0) // this will change to check if the player has enough strength and stuff, but for now, if the block is not nothing, then the block is solid
         {
             return false;
         }
 
-        // this will change to check if the player has enough strength and stuff, but for now, if the block is not nothing, then the block is solid
-
-        //PlayerPos += PlayerSize / 8;
         PlayerPos += PlayerSize * -0.5f + 0.5f;
 
         if ( // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection so good
