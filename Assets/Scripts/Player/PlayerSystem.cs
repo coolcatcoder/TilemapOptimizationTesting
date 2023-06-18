@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Burst;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct PlayerSystem : ISystem//, ISystemStartStop
 {
     [BurstCompile]

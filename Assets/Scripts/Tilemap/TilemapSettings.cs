@@ -51,6 +51,16 @@ public class TilemapBaker : Baker<TilemapSettings>
                 UV = new float2(SpriteWidth*BT.BlockSprite,0), // bottom left hand corner should be (1/NumSprites*Sprite, 0)
                 BlockMat = BT.BlockMat,
                 Depth = BT.Depth,
+                StatsChange = new Stats()
+                {
+                    Size = BT.StatsChange.Size,
+                    Health = BT.StatsChange.Health,
+                    Stamina = BT.StatsChange.Stamina,
+                    Strength = BT.StatsChange.Strength,
+                    Speed = BT.StatsChange.Speed,
+                    SprintSpeed = BT.StatsChange.SprintSpeed,
+                    WalkSpeed = BT.StatsChange.WalkSpeed
+                }
             };
         }
 
@@ -91,9 +101,12 @@ public struct TilemapSettingsData : IComponentData
 [System.Serializable]
 public struct BlockTypeMono // no id int needed, just use position in array
 {
+    public string BlockName; // makes it easier to tell which blocks are what in the array
     public int BlockSprite;
     public BlockMaterial BlockMat;
     public int Depth;
+
+    public StatsMono StatsChange;
 }
 
 public struct BlockType
@@ -101,12 +114,28 @@ public struct BlockType
     public float2 UV;
     public BlockMaterial BlockMat;
     public int Depth;
+
+    public Stats StatsChange;
 }
 
-public enum BlockMaterial
+[System.Serializable]
+public struct StatsMono // makes it easier to create block types
 {
-    Opaque = 0,
-    Transparent = 1,
-    OpaqueAnimated = 2,
-    TransparentAnimated = 3
+    public float2 Size;
+
+    public int Health;
+    public int Stamina;
+    public int Strength;
+
+    public float Speed;
+    public float SprintSpeed;
+    public float WalkSpeed;
+}
+
+public enum BlockMaterial // do we actually plan to ever use this?
+{
+    Transparent = 0,
+    Opaque = 1,
+    TransparentAnimated = 2,
+    OpaqueAnimated = 3
 }

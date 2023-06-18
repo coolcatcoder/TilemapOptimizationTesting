@@ -10,6 +10,8 @@ using UnityEngine.Rendering;
 using Unity.Collections.LowLevel.Unsafe;
 
 [BurstCompile]
+[UpdateAfter(typeof(PlayerSystem))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct TilemapSystem : ISystem, ISystemStartStop
 {
     NativeArray<byte> TilemapArray; // should never need more than 200 block types, at least I hope so
@@ -79,52 +81,38 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     public void OnUpdate(ref SystemState state)
     {
+        // to do:
+        // Player movement shouldn't trigger full mesh redo
+        // Only render 9 closest chunks!!! This will save so much performance!!!!!
+        // don't use a list, instead treat the vertex array as a 2d grid (convert to index using utility methods) this means we can grab the vertex array from the mesh, modify only what is needed, then set the mesh to have that modified vertex array, nice and simple, and SUPER PERFORMANCE. Player and other offgrid beings can be stored in a list. Plants are not offgrid beings, they belong to the grid and simply have an pos offset. Further thought: How the hell do we plan to deal with empty vertices???? Potentially draw nothing as a sprite with full transparency
+
         ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
-        Debug.Log(PlayerStats.HasMoved);
+        int2 PlayerChunkPos = ChunkPosFromBlockPos((int2)PlayerStats.Pos, ChunkWidth);
+        int PlayerChunkIndex = IndexFromPos(PlayerChunkPos, ChunkGridWidth);
 
-        CheckForCollisions(ref PlayerStats);
+        //Debug.Log(PlayerStats.HasMoved);
 
         if (PlayerStats.HasMoved)
         {
             PlayerStats.HasMoved = false;
 
-            ReplaceMesh = true; // this is very slow, instead just grab the read only mesh data, and the write only mesh data, then set the write only mesh data equal to the read only mesh data, but with updated player pos
-            BlocksToRender.Add(new BlockMeshElement
+            CheckForCollisions(ref PlayerStats);
+
+            if (!ChunksGenerated[PlayerChunkIndex])
             {
-                Position = new float3(PlayerStats.Pos, 0),
-                UV = new float2(0,0), // player is always first sprite? This is a bad idea
-                Size = PlayerStats.Size
-            });
+                GenerateChunk(PlayerChunkPos).Complete();
+            }
 
-            //new JobHandle().Complete();
+            GenerateChunksAroundPlayer((int2)PlayerStats.Pos);
 
-            //GenerateChunksAroundPlayer((int2)PlayerStats.Pos); //Why the hell does this cost so much?????
-
-            //int2 PlayerChunkPosTesting = ChunkPosFromBlockPos((int2)PlayerStats.Pos, ChunkWidth);
-
-            //if (!ChunksGenerated[IndexFromPos(PlayerChunkPosTesting, ChunkGridWidth)])
-            //{
-            //    //GenerateChunk(PlayerChunkPosTesting).Complete();
-            //    Debug.Log("pain");
-            //}
-
-            //PlayerChunkPosTesting.y -= 1;
-
-            //if (!ChunksGenerated[IndexFromPos(PlayerChunkPosTesting, ChunkGridWidth)])
-            //{
-            //    //GenerateChunk(PlayerChunkPosTesting).Complete();
-            //}
+            RenderPlayer(ref PlayerStats);
         }
 
         if (!ReplaceMesh)
         {
             return;
         }
-
-        int2 PlayerChunkPos = ChunkPosFromBlockPos((int2)PlayerStats.Pos, ChunkWidth);
-        int PlayerChunkIndex = IndexFromPos(PlayerChunkPos, ChunkGridWidth);
-
 
         if (!ChunksGenerated[PlayerChunkIndex])
         {
@@ -143,7 +131,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         MeshUpdateFlags MeshFlags = MeshUpdateFlags.DontResetBoneBounds | MeshUpdateFlags.DontValidateIndices; // very minor performance save lol
 
-        Mesh.ApplyAndDisposeWritableMeshData(GenerateMesh(), TilemapMeshManaged, MeshFlags);
+        Mesh.ApplyAndDisposeWritableMeshData(GenerateMesh((int2)PlayerStats.Pos), TilemapMeshManaged, MeshFlags);
 
         var SubMeshInfo = TilemapMeshManaged.GetSubMesh(0);
         TilemapBounds.Value = new AABB()
@@ -212,7 +200,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     #region Generation Functions and Jobs
 
-    //[BurstCompile]
+    [BurstCompile]
     public void GenerateChunksAroundPlayer(int2 PlayerPos)
     {
         int2 PlayerChunkPos = ChunkPosFromBlockPos(PlayerPos, ChunkWidth);
@@ -324,22 +312,36 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     #region Mesh Functions, Jobs, and structs
 
     [BurstCompile]
-    public Mesh.MeshDataArray GenerateMesh() // needs to be redone to only render 1 chunk at a time, or render a number of chunks based on players render distance setting
+    public void RenderPlayer(ref Stats PlayerStats)
+    {
+        ReplaceMesh = true; // this is very slow, instead just grab the read only mesh data, and the write only mesh data, then set the write only mesh data equal to the read only mesh data, but with updated player pos
+        BlocksToRender.Add(new BlockMeshElement
+        {
+            Position = new float3(PlayerStats.Pos, 0),
+            UV = new float2(0, 0), // player is always first sprite? This is a bad idea
+            Size = PlayerStats.Size
+        });
+    }
+
+    [BurstCompile]
+    public Mesh.MeshDataArray GenerateMesh(int2 PlayerPos) // needs to be redone to only render 1 chunk at a time, or render a number of chunks based on players render distance setting
     {
         Mesh.MeshDataArray TilemapMeshArray = Mesh.AllocateWritableMeshData(1); // future optimization by allocating more than 1???
         Mesh.MeshData TilemapMeshData = TilemapMeshArray[0];
 
-        int ChunksToRender = 0;
+        int2 PlayerChunkPos = ChunkPosFromBlockPos(PlayerPos, ChunkWidth);
 
-        for (int CI = 0; CI < ChunksGenerated.Length; CI++)
+        for (int i = 0; i < 9; i++)
         {
-            if (ChunksGenerated[CI])
+            int2 OffsetPos = PosFromIndex(i, 3) - 1;
+
+            int2 ChunkPos = PlayerChunkPos + OffsetPos;
+
+            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+
+            if (ChunksGenerated[ChunkIndex])
             {
-                ChunksToRender++;
-
-                int2 ChunkPos = PosFromIndex(CI, ChunkGridWidth);
-
-                int BlockIndexStart = BlockIndexFromChunkIndex(CI, ChunkWidthSquared); // bad naming scheme
+                int BlockIndexStart = BlockIndexFromChunkIndex(ChunkIndex, ChunkWidthSquared); // bad naming scheme
 
                 int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth); // bad naming scheme
 
@@ -361,7 +363,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
                     {
                         UV = TypeInfo.UV,
                         Position = new int3(WorldPos, TypeInfo.Depth), // z is depth
-                        Size = new float2(1,1)
+                        Size = new float2(1, 1)
                     });
                 }
             }
@@ -481,37 +483,50 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         {
             int2 OffsetPos = PosFromIndex(i, 3) - 1;
 
-            if (CheckForCollision(PlayerPos, PlayerSize, ClosestBlockPos+OffsetPos))
+            int2 BlockPos = ClosestBlockPos + OffsetPos;
+
+            BlockPos = math.clamp(BlockPos, 0, int.MaxValue);
+
+            int2 ChunkPos = ChunkPosFromBlockPos(BlockPos, ChunkWidth);
+            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+            int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
+
+            int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
+
+            int2 LocalPos = BlockPos - WorldPosStart;
+
+            int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
+
+            int BlockIndex = BlockIndexStart + LocalIndex;
+
+            byte BlockTypeIndex = TilemapArray[BlockIndex];
+
+            if (BlockTypeIndex == 0) // you can't collide with nothing
             {
+                continue;
+            }
+
+            if (CheckForCollision(PlayerPos, PlayerSize, BlockPos))
+            {
+                BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
+
+                if (BlockInfo.StatsChange.Strength < PlayerStats.Strength)
+                {
+                    TilemapArray[BlockIndex] = 0;
+
+                    PlayerStats += BlockInfo.StatsChange;
+
+                    continue;
+                }
+
                 PlayerStats.Pos = PlayerStats.PreviousPos;
                 return;
             }
         }
     }
 
-    public bool CheckForCollision(float2 PlayerPos, float2 PlayerSize, int2 BlockPos) // highly likely this isn't correct
+    public bool CheckForCollision(float2 PlayerPos, float2 PlayerSize, int2 BlockPos)
     {
-        BlockPos = math.clamp(BlockPos, 0, int.MaxValue);
-
-        int2 ChunkPos = ChunkPosFromBlockPos(BlockPos, ChunkWidth);
-        int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
-        int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
-
-        int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
-
-        int2 LocalPos = BlockPos - WorldPosStart;
-
-        int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
-        
-        int BlockIndex = BlockIndexStart + LocalIndex;
-
-        byte BlockTypeIndex = TilemapArray[BlockIndex];
-
-        if (BlockTypeIndex == 0) // this will change to check if the player has enough strength and stuff, but for now, if the block is not nothing, then the block is solid
-        {
-            return false;
-        }
-
         PlayerPos += PlayerSize * -0.5f + 0.5f;
 
         if ( // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection so good

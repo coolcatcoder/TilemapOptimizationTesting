@@ -160,20 +160,53 @@ MonoBehaviour:
     x: 5000
     y: 5000
   GenerationWidth: 200
-  ChunkWidth: 200
+  ChunkWidth: 50
   MaxBlocksToRender: 0
   SpriteGridWidth: 17
   SpriteGridHeight: 1
   Blocktypes:
-  - BlockSprite: 1
+  - BlockName: None
+    BlockSprite: 1
     BlockMat: 0
     Depth: 1
-  - BlockSprite: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
     BlockMat: 0
     Depth: 2
-  - BlockSprite: 3
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: The one I don't remember the name of.
+    BlockSprite: 3
     BlockMat: 0
     Depth: 3
+    StatsChange:
+      Size:
+        x: -0.01
+        y: -0.01
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
@@ -280,6 +313,7 @@ MonoBehaviour:
       y: 0
     Health: 50
     Stamina: 50
+    Strength: 1
     Sprinting: 0
     Speed: 0
     SprintSpeed: 9
