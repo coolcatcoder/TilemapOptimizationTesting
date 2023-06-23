@@ -26,6 +26,12 @@ public partial struct PlayerSystem : ISystem//, ISystemStartStop
         ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
         ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
+        if (PlayerStats.ForceUpdate)
+        {
+            PlayerStats.ForceUpdate = false;
+            Object.FindObjectOfType<Camera>().transform.position = new float3(PlayerStats.Pos, -10);
+        }
+
         PlayerStats.PreviousPos = PlayerStats.Pos;
 
         if (InputInfo.SprintPressed)

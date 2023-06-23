@@ -32,10 +32,16 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     uint Seed;
 
+    float TerrainNoiseScale;
+    float AdditionToTerrainNoise;
+    float PostTerrainNoiseScale;
+
     float SpriteWidth;
     float SpriteHeight;
 
     Random SafePosRandom;
+
+    bool DebugChunk0;
 
     #region ISystem Methods
 
@@ -50,6 +56,40 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     public void OnStartRunning(ref SystemState state)
     {
         ref var TilemapSettingsInfo = ref SystemAPI.GetSingletonRW<TilemapSettingsData>().ValueRW;
+
+        //float LowestValue = 100f;
+        //float HighestValue = -100f;
+
+        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
+        //{
+        //    float NoiseValue = noise.snoise(TilemapSettingsInfo.TerrainNoiseScale * (float2)Random.CreateFromIndex((uint)i).NextInt2(0, int.MaxValue));
+
+        //    if (NoiseValue > HighestValue)
+        //    {
+        //        HighestValue = NoiseValue;
+        //    }
+
+        //    if (NoiseValue < LowestValue)
+        //    {
+        //        LowestValue = NoiseValue;
+        //    }
+        //}
+
+        //Debug.Log(HighestValue);
+        //Debug.Log(LowestValue);
+
+        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
+        //{
+        //    float NoiseValue = noise.snoise(TilemapSettingsInfo.TerrainNoiseScale * (float2)Random.CreateFromIndex((uint)i).NextInt2(0, int.MaxValue));
+
+        //    Debug.Log((int)math.round((NoiseValue + 0.696) * 2 + 1));
+        //}
+
+        TerrainNoiseScale = TilemapSettingsInfo.TerrainNoiseScale;
+        PostTerrainNoiseScale = TilemapSettingsInfo.PostTerrainNoiseScale;
+        AdditionToTerrainNoise = TilemapSettingsInfo.AdditionToTerrainNoise;
+
+        DebugChunk0 = TilemapSettingsInfo.DebugChunk0;
 
         BlockTypes = TilemapSettingsInfo.BlockTypes;
 
@@ -74,7 +114,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         VertexAttributes[0] = new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3);
         VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2);
 
-        SystemAPI.GetSingletonRW<Stats>().ValueRW.Pos = FindSafePos();
+        ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
+
+        PlayerStats.Pos = FindSafePos();
+        PlayerStats.ForceUpdate = true;
 
         ReplaceMesh = true;
     }
@@ -85,6 +128,12 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         // Player movement shouldn't trigger full mesh redo
         // Only render 9 closest chunks!!! This will save so much performance!!!!!
         // don't use a list, instead treat the vertex array as a 2d grid (convert to index using utility methods) this means we can grab the vertex array from the mesh, modify only what is needed, then set the mesh to have that modified vertex array, nice and simple, and SUPER PERFORMANCE. Player and other offgrid beings can be stored in a list. Plants are not offgrid beings, they belong to the grid and simply have an pos offset. Further thought: How the hell do we plan to deal with empty vertices???? Potentially draw nothing as a sprite with full transparency
+
+        if (DebugChunk0)
+        {
+            GenerateChunk(0).Complete(); // replace with custom chunk generator that accounts for updates to component
+            ReplaceMesh = true;
+        }
 
         ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
@@ -209,9 +258,11 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         {
             int2 OffsetPos = PosFromIndex(i, 3) - 1;
 
-            if (!ChunksGenerated[IndexFromPos(OffsetPos+PlayerChunkPos, ChunkGridWidth)])
+            int SafeChunkIndex = math.clamp(IndexFromPos(OffsetPos + PlayerChunkPos, ChunkGridWidth), 0, int.MaxValue);
+
+            if (!ChunksGenerated[SafeChunkIndex])
             {
-                GenerateChunk(PlayerChunkPos + OffsetPos).Complete();
+                GenerateChunk(math.clamp(PlayerChunkPos + OffsetPos, 0, int.MaxValue)).Complete();
             }
         }
     }
@@ -243,9 +294,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         return WorldPosStart; // fail deadly
     }
 
-    public static byte GenerateBlock(int2 Pos, Random Rand, byte AmountOfBlockTypes)
+    public static byte GenerateBlock(int2 Pos, uint Seed, float Scale, float AdditionToNoise, float PostScale, byte AmountOfBlockTypes)
     {
-        return (byte)Rand.NextInt(0,AmountOfBlockTypes);
+        return (byte)math.clamp(math.round((noise.snoise(new float2(Pos.x + Seed, Pos.y) * Scale) + AdditionToNoise) * PostScale), 0, AmountOfBlockTypes-1);
     }
 
     public JobHandle GenerateChunk(int2 ChunkPos, JobHandle Dependency = new()) // do we want to burst compile this?
@@ -265,7 +316,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             GridWidth = BlockGridWidth,
             ChunkWidth = ChunkWidth,
             ChunkWorldPos = BlockPos,
-            Seed = Seed + (uint)ChunkIndex,
+            Seed = Seed,
+            TerrainNoiseScale = TerrainNoiseScale,
+            AdditionToNoise = AdditionToTerrainNoise,
+            PostScale = PostTerrainNoiseScale,
             AmountOfBlockTypes = (byte)BlockTypes.Value.Length
         };
 
@@ -288,6 +342,12 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         public uint Seed;
 
+        public float TerrainNoiseScale;
+
+        public float AdditionToNoise;
+
+        public float PostScale;
+
         public byte AmountOfBlockTypes;
 
         public void Execute(int i)
@@ -303,7 +363,8 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
 
             Random ParallelRandom = Random.CreateFromIndex((uint)(Seed + i));
-            Tilemap[TrueIndex] = GenerateBlock(BlockLocalPos + ChunkWorldPos, ParallelRandom, AmountOfBlockTypes);
+            //Tilemap[TrueIndex] = GenerateBlockOld(BlockLocalPos + ChunkWorldPos, ParallelRandom, AmountOfBlockTypes);
+            Tilemap[TrueIndex] = GenerateBlock(BlockLocalPos + ChunkWorldPos, Seed, TerrainNoiseScale, AdditionToNoise, PostScale, AmountOfBlockTypes);
         }
     }
 
@@ -337,7 +398,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             int2 ChunkPos = PlayerChunkPos + OffsetPos;
 
-            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+            int ChunkIndex = math.clamp(IndexFromPos(ChunkPos, ChunkGridWidth), 0, int.MaxValue);
 
             if (ChunksGenerated[ChunkIndex])
             {

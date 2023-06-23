@@ -35,6 +35,8 @@ public struct Stats : IComponentData
     public float WalkSpeed;
     public bool HasMoved;
 
+    public bool ForceUpdate;
+
     // implement an addition operator
     public static Stats operator +(Stats x, Stats y)
     {
@@ -44,6 +46,7 @@ public struct Stats : IComponentData
             PreviousPos = x.PreviousPos,
             Sprinting = x.Sprinting,
             HasMoved = x.HasMoved,
+            ForceUpdate = x.ForceUpdate,
 
             Size = math.clamp(x.Size + y.Size, 0.1f, float.MaxValue),
             Health = math.clamp(x.Health + y.Health, 0, int.MaxValue),

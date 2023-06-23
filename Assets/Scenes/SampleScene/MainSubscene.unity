@@ -155,13 +155,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TilemapSize: 20000
-  Trials: 50
+  Trials: 10
   Pos:
     x: 5000
     y: 5000
-  GenerationWidth: 200
   ChunkWidth: 50
   MaxBlocksToRender: 0
+  TerrainNoiseScale: 0.05
+  AdditionToTerrainNoise: 0.696
+  PostTerrainNoiseScale: 10
+  DebugChunk0: 0
   SpriteGridWidth: 17
   SpriteGridHeight: 1
   Blocktypes:
@@ -173,6 +176,20 @@ MonoBehaviour:
       Size:
         x: 0
         y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: The one I don't remember the name of.
+    BlockSprite: 3
+    BlockMat: 0
+    Depth: 3
+    StatsChange:
+      Size:
+        x: -0.01
+        y: -0.01
       Health: 0
       Stamina: 0
       Strength: 0
@@ -193,17 +210,157 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-  - BlockName: The one I don't remember the name of.
-    BlockSprite: 3
+  - BlockName: Circus Rock
+    BlockSprite: 2
     BlockMat: 0
-    Depth: 3
+    Depth: 2
     StatsChange:
       Size:
-        x: -0.01
-        y: -0.01
+        x: 0
+        y: 0
       Health: 0
       Stamina: 0
-      Strength: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 2
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+  - BlockName: Circus Rock
+    BlockSprite: 8
+    BlockMat: 0
+    Depth: 2
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 1
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
@@ -319,6 +476,7 @@ MonoBehaviour:
     SprintSpeed: 9
     WalkSpeed: 4
     HasMoved: 1
+    ForceUpdate: 1
 --- !u!4 &1496029463
 Transform:
   m_ObjectHideFlags: 0

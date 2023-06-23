@@ -9,9 +9,14 @@ public class TilemapSettings : MonoBehaviour
     public int TilemapSize;
     public int Trials;
     public int2 Pos;
-    public int GenerationWidth;
     public int ChunkWidth;
     public int MaxBlocksToRender;
+
+    public float TerrainNoiseScale;
+    public float AdditionToTerrainNoise;
+    public float PostTerrainNoiseScale;
+
+    public bool DebugChunk0;
 
     public int SpriteGridWidth;
     public int SpriteGridHeight;
@@ -71,9 +76,12 @@ public class TilemapBaker : Baker<TilemapSettings>
             TilemapSize = authoring.TilemapSize,
             Trials = authoring.Trials,
             Pos = authoring.Pos,
-            GenerationWidth = authoring.GenerationWidth,
             ChunkWidth = authoring.ChunkWidth,
             MaxBlocksToRender = authoring.MaxBlocksToRender,
+            TerrainNoiseScale = authoring.TerrainNoiseScale,
+            AdditionToTerrainNoise = authoring.AdditionToTerrainNoise,
+            PostTerrainNoiseScale = authoring.PostTerrainNoiseScale,
+            DebugChunk0 = authoring.DebugChunk0,
             SpriteWidth = SpriteWidth,
             SpriteHeight = 1f/authoring.SpriteGridHeight,
             BlockTypes = Builder.CreateBlobAssetReference<BlobArray<BlockType>>(Allocator.Persistent)
@@ -88,9 +96,14 @@ public struct TilemapSettingsData : IComponentData
     public int TilemapSize;
     public int Trials;
     public int2 Pos;
-    public int GenerationWidth;
     public int ChunkWidth;
     public int MaxBlocksToRender;
+
+    public float TerrainNoiseScale;
+    public float AdditionToTerrainNoise;
+    public float PostTerrainNoiseScale;
+
+    public bool DebugChunk0;
 
     public float SpriteWidth;
     public float SpriteHeight;
