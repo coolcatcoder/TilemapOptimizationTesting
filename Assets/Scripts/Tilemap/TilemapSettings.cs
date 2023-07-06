@@ -10,7 +10,8 @@ public class TilemapSettings : MonoBehaviour
     public int Trials;
     public int2 Pos;
     public int ChunkWidth;
-    public int MaxBlocksToRender;
+
+    public float3 BiomeScale;
 
     public float TerrainNoiseScale;
     public float AdditionToTerrainNoise;
@@ -22,6 +23,8 @@ public class TilemapSettings : MonoBehaviour
     public int SpriteGridHeight;
 
     public BlockTypeMono[] Blocktypes;
+
+    public TilemapSystem.Biome[] Biomes;
 }
 
 public class TilemapBaker : Baker<TilemapSettings>
@@ -34,16 +37,22 @@ public class TilemapBaker : Baker<TilemapSettings>
             return;
         }
 
+        if (authoring.Biomes.Length <= 0)
+        {
+            Debug.LogError("Can't bake tilemap due to lack of Biomes.");
+            return;
+        }
+
         if (authoring.SpriteGridHeight <= 0 || authoring.SpriteGridWidth <= 0)
         {
             Debug.LogError("Can't bake tilemap because SpriteGridHeight or SpriteGridWidth is 0 or below.");
             return;
         }
 
-        var Builder = new BlobBuilder(Allocator.Temp);
-        ref var BlockTypesArray = ref Builder.ConstructRoot<BlobArray<BlockType>>();
+        var BlockTypesBuilder = new BlobBuilder(Allocator.Temp);
+        ref var BlockTypesArray = ref BlockTypesBuilder.ConstructRoot<BlobArray<BlockType>>();
 
-        BlobBuilderArray<BlockType> ArrayBuilder = Builder.Allocate(ref BlockTypesArray, authoring.Blocktypes.Length);
+        BlobBuilderArray<BlockType> BlockTypesArrayBuilder = BlockTypesBuilder.Allocate(ref BlockTypesArray, authoring.Blocktypes.Length);
 
         float SpriteWidth = 1f / authoring.SpriteGridWidth;
 
@@ -51,7 +60,7 @@ public class TilemapBaker : Baker<TilemapSettings>
         {
             var BT = authoring.Blocktypes[i];
 
-            ArrayBuilder[i] = new BlockType
+            BlockTypesArrayBuilder[i] = new BlockType
             {
                 UV = new float2(SpriteWidth*BT.BlockSprite,0), // bottom left hand corner should be (1/NumSprites*Sprite, 0)
                 BlockMat = BT.BlockMat,
@@ -69,6 +78,16 @@ public class TilemapBaker : Baker<TilemapSettings>
             };
         }
 
+        var BiomesBuilder = new BlobBuilder(Allocator.Temp);
+        ref var BiomesArray = ref BiomesBuilder.ConstructRoot<BlobArray<TilemapSystem.Biome>>();
+
+        BlobBuilderArray<TilemapSystem.Biome> BiomesArrayBuilder = BiomesBuilder.Allocate(ref BiomesArray, authoring.Biomes.Length);
+
+        for (int i = 0; i < authoring.Biomes.Length; i++)
+        {
+            BiomesArrayBuilder[i] = authoring.Biomes[i];
+        }
+
         var entity = GetEntity(TransformUsageFlags.Renderable);
 
         AddComponent(entity, new TilemapSettingsData
@@ -77,17 +96,19 @@ public class TilemapBaker : Baker<TilemapSettings>
             Trials = authoring.Trials,
             Pos = authoring.Pos,
             ChunkWidth = authoring.ChunkWidth,
-            MaxBlocksToRender = authoring.MaxBlocksToRender,
+            BiomeScale = authoring.BiomeScale,
             TerrainNoiseScale = authoring.TerrainNoiseScale,
             AdditionToTerrainNoise = authoring.AdditionToTerrainNoise,
             PostTerrainNoiseScale = authoring.PostTerrainNoiseScale,
             DebugChunk0 = authoring.DebugChunk0,
             SpriteWidth = SpriteWidth,
             SpriteHeight = 1f/authoring.SpriteGridHeight,
-            BlockTypes = Builder.CreateBlobAssetReference<BlobArray<BlockType>>(Allocator.Persistent)
+            BlockTypes = BlockTypesBuilder.CreateBlobAssetReference<BlobArray<BlockType>>(Allocator.Persistent),
+            Biomes = BiomesBuilder.CreateBlobAssetReference<BlobArray<TilemapSystem.Biome>>(Allocator.Persistent)
         });
 
-        Builder.Dispose();
+        BlockTypesBuilder.Dispose();
+        BiomesBuilder.Dispose();
     }
 }
 
@@ -97,7 +118,8 @@ public struct TilemapSettingsData : IComponentData
     public int Trials;
     public int2 Pos;
     public int ChunkWidth;
-    public int MaxBlocksToRender;
+
+    public float3 BiomeScale;
 
     public float TerrainNoiseScale;
     public float AdditionToTerrainNoise;
@@ -109,6 +131,7 @@ public struct TilemapSettingsData : IComponentData
     public float SpriteHeight;
 
     public BlobAssetReference<BlobArray<BlockType>> BlockTypes;
+    public BlobAssetReference<BlobArray<TilemapSystem.Biome>> Biomes;
 }
 
 [System.Serializable]

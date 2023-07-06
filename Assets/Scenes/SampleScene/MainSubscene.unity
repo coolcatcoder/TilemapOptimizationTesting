@@ -159,13 +159,16 @@ MonoBehaviour:
   Pos:
     x: 5000
     y: 5000
-  ChunkWidth: 50
-  MaxBlocksToRender: 0
+  ChunkWidth: 200
+  BiomeScale:
+    x: 0.01
+    y: 0.08
+    z: 0.05
   TerrainNoiseScale: 0.05
   AdditionToTerrainNoise: 0.696
   PostTerrainNoiseScale: 10
-  DebugChunk0: 0
-  SpriteGridWidth: 17
+  DebugChunk0: 1
+  SpriteGridWidth: 34
   SpriteGridHeight: 1
   Blocktypes:
   - BlockName: None
@@ -210,8 +213,8 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
+  - BlockName: purple
+    BlockSprite: 27
     BlockMat: 0
     Depth: 2
     StatsChange:
@@ -224,8 +227,8 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
+  - BlockName: pink
+    BlockSprite: 28
     BlockMat: 0
     Depth: 2
     StatsChange:
@@ -238,8 +241,8 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
+  - BlockName: orange
+    BlockSprite: 29
     BlockMat: 0
     Depth: 2
     StatsChange:
@@ -252,118 +255,47 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 2
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-  - BlockName: Circus Rock
-    BlockSprite: 8
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
+  Biomes:
+  - IdealConditions:
+      x: -0.8
+      y: 0.8
+      z: 0
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 0
+    BlockLength: 0
+  - IdealConditions:
+      x: 0
+      y: 0.7
+      z: 0.5
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 2
+    BlockLength: 0
+  - IdealConditions:
+      x: 0.5
+      y: 0
+      z: 0.8
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 3
+    BlockLength: 0
+  - IdealConditions:
+      x: 0
+      y: 0.7
+      z: 0.5
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 4
+    BlockLength: 0
+  - IdealConditions:
+      x: -1
+      y: -1
+      z: -1
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 5
+    BlockLength: 0
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
