@@ -18,6 +18,7 @@ public class TilemapSettings : MonoBehaviour
     public float PostTerrainNoiseScale;
 
     public bool DebugChunk0;
+    public bool DebugBiomeDraw;
 
     public int SpriteGridWidth;
     public int SpriteGridHeight;
@@ -63,8 +64,9 @@ public class TilemapBaker : Baker<TilemapSettings>
             BlockTypesArrayBuilder[i] = new BlockType
             {
                 UV = new float2(SpriteWidth*BT.BlockSprite,0), // bottom left hand corner should be (1/NumSprites*Sprite, 0)
-                BlockMat = BT.BlockMat,
+                //BlockMat = BT.BlockMat,
                 Depth = BT.Depth,
+                Behaviour = BT.Behaviour,
                 StatsChange = new Stats()
                 {
                     Size = BT.StatsChange.Size,
@@ -74,7 +76,9 @@ public class TilemapBaker : Baker<TilemapSettings>
                     Speed = BT.StatsChange.Speed,
                     SprintSpeed = BT.StatsChange.SprintSpeed,
                     WalkSpeed = BT.StatsChange.WalkSpeed
-                }
+                },
+                MinNoise = BT.MinNoise,
+                MaxNoise = BT.MaxNoise
             };
         }
 
@@ -101,6 +105,7 @@ public class TilemapBaker : Baker<TilemapSettings>
             AdditionToTerrainNoise = authoring.AdditionToTerrainNoise,
             PostTerrainNoiseScale = authoring.PostTerrainNoiseScale,
             DebugChunk0 = authoring.DebugChunk0,
+            DebugBiomeDraw = authoring.DebugBiomeDraw,
             SpriteWidth = SpriteWidth,
             SpriteHeight = 1f/authoring.SpriteGridHeight,
             BlockTypes = BlockTypesBuilder.CreateBlobAssetReference<BlobArray<BlockType>>(Allocator.Persistent),
@@ -126,6 +131,7 @@ public struct TilemapSettingsData : IComponentData
     public float PostTerrainNoiseScale;
 
     public bool DebugChunk0;
+    public bool DebugBiomeDraw;
 
     public float SpriteWidth;
     public float SpriteHeight;
@@ -139,19 +145,29 @@ public struct BlockTypeMono // no id int needed, just use position in array
 {
     public string BlockName; // makes it easier to tell which blocks are what in the array
     public int BlockSprite;
-    public BlockMaterial BlockMat;
+    //public BlockMaterial BlockMat;
     public int Depth;
 
+    public CollisionBehaviour Behaviour;
+
     public StatsMono StatsChange;
+
+    public float MinNoise;
+    public float MaxNoise;
 }
 
 public struct BlockType
 {
     public float2 UV;
-    public BlockMaterial BlockMat;
+    //public BlockMaterial BlockMat; removed for now
     public int Depth;
 
+    public CollisionBehaviour Behaviour;
+
     public Stats StatsChange;
+
+    public float MinNoise;
+    public float MaxNoise;
 }
 
 [System.Serializable]
@@ -174,4 +190,10 @@ public enum BlockMaterial // do we actually plan to ever use this?
     Opaque = 1,
     TransparentAnimated = 2,
     OpaqueAnimated = 3
+}
+
+public enum CollisionBehaviour
+{
+    None = 0,
+    Consume = 1
 }

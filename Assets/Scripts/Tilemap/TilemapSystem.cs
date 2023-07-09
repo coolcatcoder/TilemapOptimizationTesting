@@ -190,6 +190,11 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             byte BlockTypeIndex = TilemapArray[BlockIndex];
 
+            if (BlockTypeIndex == 0)
+            {
+                continue;
+            }
+
             BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
 
             int VertexStart = i * 4; // if every tile takes up 4 vertices then we use i * 4 to get the correct starting vertex
@@ -438,7 +443,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         return WorldPosStart; // fail deadly
     }
 
-    public static byte GenerateBlock(int2 Pos, uint Seed, float3 BiomeSeed, float3 BiomeScale, float Scale, float AdditionToNoise, float PostScale, byte AmountOfBlockTypes, BlobAssetReference<BlobArray<Biome>> Biomes) // extremely bad, don't like
+    public static byte GenerateBlock(int2 Pos, uint Seed, float3 BiomeSeed, float3 BiomeScale, float Scale, float AdditionToNoise, float PostScale, byte AmountOfBlockTypes, BlobAssetReference<BlobArray<Biome>> Biomes, BlobAssetReference<BlobArray<BlockType>> BlockTypes) // extremely bad, don't like
     {
         float3 BlockConditions = new float3(
             noise.snoise(new float2(Pos.x, Pos.y + BiomeSeed.x) * BiomeScale.x),
@@ -448,7 +453,33 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         int BiomeIndex = FindClosestBiome(BlockConditions, Biomes);
 
-        return Biomes.Value[BiomeIndex].StartingBlockIndex;
+        Biome BiomeInfo = Biomes.Value[BiomeIndex];
+
+        float BlockNoise = noise.snoise(new float2(Pos.x + Seed, Pos.y) * Scale); // replace with per biome stuff
+
+        for (int i = BiomeInfo.StartingBlockIndex; i < BiomeInfo.BlockLength + BiomeInfo.StartingBlockIndex; i++)
+        {
+            BlockType BlockInfo = BlockTypes.Value[i];
+
+            if ((BlockNoise >= BlockInfo.MinNoise) && (BlockNoise < BlockInfo.MaxNoise))
+            {
+                return (byte)i;
+            }
+        }
+
+        //for (int i = BiomeInfo.StartingPlantIndex; i < BiomeInfo.PlantLength + BiomeInfo.StartingPlantIndex; i++)
+        //{
+        //    BlockType BlockInfo = BlockTypes.Value[i];
+
+        //    if ((BlockNoise >= BlockInfo.MinNoise) && (BlockNoise < BlockInfo.MaxNoise))
+        //    {
+        //        return (byte)i;
+        //    }
+        //}
+
+        return 0;
+
+        //return Biomes.Value[BiomeIndex].StartingBlockIndex;
 
         //return (byte)math.clamp(math.round((noise.snoise(new float2(Pos.x + Seed, Pos.y) * Scale) + AdditionToNoise) * PostScale), 0, AmountOfBlockTypes - 1);
     }
@@ -477,7 +508,8 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             AdditionToNoise = AdditionToTerrainNoise,
             PostScale = PostTerrainNoiseScale,
             AmountOfBlockTypes = (byte)BlockTypes.Value.Length,
-            Biomes = Biomes
+            Biomes = Biomes,
+            BlockTypes = BlockTypes
         };
 
         return ChunkGeneratorJob.ScheduleParallel(ChunkWidthSquared, 64, Dependency);
@@ -514,6 +546,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         [ReadOnly]
         public BlobAssetReference<BlobArray<Biome>> Biomes;
 
+        [ReadOnly]
+        public BlobAssetReference<BlobArray<BlockType>> BlockTypes;
+
         public void Execute(int i)
         {
             int2 BlockLocalPos = PosFromIndex(i, ChunkWidth);
@@ -531,7 +566,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             int2 BlockWorldPos = BlockLocalPos + ChunkWorldPos;
 
-            byte BlockTypeIndex = GenerateBlock(BlockWorldPos, Seed, BiomeSeed, BiomeScale, TerrainNoiseScale, AdditionToNoise, PostScale, AmountOfBlockTypes, Biomes);
+            byte BlockTypeIndex = GenerateBlock(BlockWorldPos, Seed, BiomeSeed, BiomeScale, TerrainNoiseScale, AdditionToNoise, PostScale, AmountOfBlockTypes, Biomes, BlockTypes);
 
             Tilemap[TrueIndex] = BlockTypeIndex;
         }
@@ -620,7 +655,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
                 if (BlockInfo.StatsChange.Strength < PlayerStats.Strength)
                 {
-                    TilemapArray[BlockIndex] = 0;
+                    if (BlockInfo.Behaviour.HasFlag(CollisionBehaviour.Consume))
+                    {
+                        TilemapArray[BlockIndex] = 0;
+                    }
 
                     PlayerStats += BlockInfo.StatsChange;
 

@@ -168,13 +168,14 @@ MonoBehaviour:
   AdditionToTerrainNoise: 0.696
   PostTerrainNoiseScale: 10
   DebugChunk0: 1
+  DebugBiomeDraw: 0
   SpriteGridWidth: 34
   SpriteGridHeight: 1
   Blocktypes:
   - BlockName: None
     BlockSprite: 1
-    BlockMat: 0
     Depth: 1
+    Behaviour: 0
     StatsChange:
       Size:
         x: 0
@@ -185,10 +186,12 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
   - BlockName: The one I don't remember the name of.
     BlockSprite: 3
-    BlockMat: 0
     Depth: 3
+    Behaviour: 1
     StatsChange:
       Size:
         x: -0.01
@@ -199,10 +202,28 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
+    MinNoise: -0.7
+    MaxNoise: -0.3
+  - BlockName: SwishySwashy
+    BlockSprite: 4
+    Depth: 2
+    Behaviour: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: -0.3
+    MaxNoise: 0
   - BlockName: Circus Rock
     BlockSprite: 2
-    BlockMat: 0
     Depth: 2
+    Behaviour: 1
     StatsChange:
       Size:
         x: 0
@@ -213,38 +234,28 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-  - BlockName: purple
-    BlockSprite: 27
-    BlockMat: 0
-    Depth: 2
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 1
   - BlockName: pink
     BlockSprite: 28
-    BlockMat: 0
     Depth: 2
+    Behaviour: 0
     StatsChange:
       Size:
         x: 0
         y: 0
       Health: 0
       Stamina: 0
-      Strength: 1
+      Strength: 0
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
+    MinNoise: -0.5
+    MaxNoise: 0
   - BlockName: orange
     BlockSprite: 29
-    BlockMat: 0
     Depth: 2
+    Behaviour: 0
     StatsChange:
       Size:
         x: 0
@@ -255,6 +266,8 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 1
   Biomes:
   - IdealConditions:
       x: -0.8
@@ -262,24 +275,8 @@ MonoBehaviour:
       z: 0
     StartingPlantIndex: 0
     PlantLength: 0
-    StartingBlockIndex: 0
-    BlockLength: 0
-  - IdealConditions:
-      x: 0
-      y: 0.7
-      z: 0.5
-    StartingPlantIndex: 0
-    PlantLength: 0
-    StartingBlockIndex: 2
-    BlockLength: 0
-  - IdealConditions:
-      x: 0.5
-      y: 0
-      z: 0.8
-    StartingPlantIndex: 0
-    PlantLength: 0
-    StartingBlockIndex: 3
-    BlockLength: 0
+    StartingBlockIndex: 1
+    BlockLength: 3
   - IdealConditions:
       x: 0
       y: 0.7
@@ -287,15 +284,7 @@ MonoBehaviour:
     StartingPlantIndex: 0
     PlantLength: 0
     StartingBlockIndex: 4
-    BlockLength: 0
-  - IdealConditions:
-      x: -1
-      y: -1
-      z: -1
-    StartingPlantIndex: 0
-    PlantLength: 0
-    StartingBlockIndex: 5
-    BlockLength: 0
+    BlockLength: 2
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
