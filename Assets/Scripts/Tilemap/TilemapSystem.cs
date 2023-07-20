@@ -163,65 +163,25 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         BurstUpdate(ref state, Vertices, Indices, RenderAmount);
 
-        // slow and temporary: Please replace with burst compiled parallel job!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        for (int i = 0; i < RenderAmount; i++)
+        var TilemapToMeshJob = new TilemapToMesh()
         {
-            int2 iWorldPos = PosFromIndex(i, ScreenWidth);
+            TilemapArray = TilemapArray,
+            BlockTypes = BlockTypes,
+            Vertices = Vertices,
+            Indices = Indices,
+            SpriteWidth = SpriteWidth,
+            SpriteHeight = SpriteHeight,
+            ScreenWidth = ScreenWidth,
+            BlockGridWidth = BlockGridWidth,
+            ChunkWidth = ChunkWidth,
+            ChunkWidthSquared = ChunkWidthSquared,
+            ChunkGridWidth = ChunkGridWidth,
+            BottomLeftOfScreen = BottomLeftPos
+        };
 
-            int2 TrueWorldPos = iWorldPos + BottomLeftPos;
+        JobHandle TilemapToMeshHandle = TilemapToMeshJob.ScheduleParallel(RenderAmount, 64, new JobHandle());
 
-            if (TrueWorldPos.x < 0 || TrueWorldPos.y < 0)
-            {
-                continue;
-            }
-
-            int2 ChunkPos = ChunkPosFromBlockPos(TrueWorldPos, ChunkWidth);
-            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
-            int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
-
-            int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
-
-            int2 LocalPos = TrueWorldPos - WorldPosStart;
-
-            int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
-
-            int BlockIndex = BlockIndexStart + LocalIndex;
-
-            byte BlockTypeIndex = TilemapArray[BlockIndex];
-
-            if (BlockTypeIndex == 0)
-            {
-                continue;
-            }
-
-            BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
-
-            int VertexStart = i * 4; // if every tile takes up 4 vertices then we use i * 4 to get the correct starting vertex
-            int IndexStart = i * 6; // read above and replace some words, and you might understand my nonsense
-
-            UnsafeElementAt(Vertices, VertexStart).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(0.5f, 0.5f, 0); // top right
-            UnsafeElementAt(Vertices, VertexStart).UV = BlockInfo.UV + new float2(SpriteWidth, SpriteHeight);
-
-            UnsafeElementAt(Vertices, VertexStart + 1).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(0.5f, -0.5f, 0); // bottom right
-            UnsafeElementAt(Vertices, VertexStart + 1).UV = BlockInfo.UV + new float2(SpriteWidth, 0);
-
-            UnsafeElementAt(Vertices, VertexStart + 2).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(-0.5f, 0.5f, 0); // top left
-            UnsafeElementAt(Vertices, VertexStart + 2).UV = BlockInfo.UV + new float2(0, SpriteHeight);
-
-            UnsafeElementAt(Vertices, VertexStart + 3).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(-0.5f, -0.5f, 0); // bottom left
-            UnsafeElementAt(Vertices, VertexStart + 3).UV = BlockInfo.UV;
-
-            uint UVertexStart = (uint)VertexStart;
-
-            Indices[IndexStart] = UVertexStart;
-            Indices[IndexStart + 1] = UVertexStart + 1;
-            Indices[IndexStart + 2] = UVertexStart + 2;
-
-            Indices[IndexStart + 3] = UVertexStart + 1;
-            Indices[IndexStart + 4] = UVertexStart + 3;
-            Indices[IndexStart + 5] = UVertexStart + 2;
-        }
+        TilemapToMeshHandle.Complete(); // do the system handle nonsense sooner rather than later!!!!!!!!!
 
         Bounds SubMeshBounds = new Bounds()
         {
@@ -443,7 +403,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         return WorldPosStart; // fail deadly
     }
 
-    public static byte GenerateBlock(int2 Pos, uint Seed, float3 BiomeSeed, float3 BiomeScale, float Scale, float AdditionToNoise, float PostScale, byte AmountOfBlockTypes, BlobAssetReference<BlobArray<Biome>> Biomes, BlobAssetReference<BlobArray<BlockType>> BlockTypes) // extremely bad, don't like
+    public static byte GenerateBlock(int2 Pos, uint Seed, float3 BiomeSeed, float3 BiomeScale, float Scale, BlobAssetReference<BlobArray<Biome>> Biomes, BlobAssetReference<BlobArray<BlockType>> BlockTypes, int TrueIndex) // extremely bad, don't like
     {
         float3 BlockConditions = new float3(
             noise.snoise(new float2(Pos.x, Pos.y + BiomeSeed.x) * BiomeScale.x),
@@ -467,15 +427,17 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             }
         }
 
-        //for (int i = BiomeInfo.StartingPlantIndex; i < BiomeInfo.PlantLength + BiomeInfo.StartingPlantIndex; i++)
-        //{
-        //    BlockType BlockInfo = BlockTypes.Value[i];
+        Random ParallelRandom = Random.CreateFromIndex((uint)(Seed + TrueIndex));
 
-        //    if ((BlockNoise >= BlockInfo.MinNoise) && (BlockNoise < BlockInfo.MaxNoise))
-        //    {
-        //        return (byte)i;
-        //    }
-        //}
+        for (int i = BiomeInfo.StartingPlantIndex; i < BiomeInfo.PlantLength + BiomeInfo.StartingPlantIndex; i++)
+        {
+            BlockType BlockInfo = BlockTypes.Value[i];
+
+            if (ParallelRandom.NextFloat() < BlockInfo.Chance)
+            {
+                return (byte)i;
+            }
+        }
 
         return 0;
 
@@ -560,13 +522,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
                 return;
             }
 
-
-            Random ParallelRandom = Random.CreateFromIndex((uint)(Seed + i));
-            //Tilemap[TrueIndex] = GenerateBlockOld(BlockLocalPos + ChunkWorldPos, ParallelRandom, AmountOfBlockTypes);
-
             int2 BlockWorldPos = BlockLocalPos + ChunkWorldPos;
 
-            byte BlockTypeIndex = GenerateBlock(BlockWorldPos, Seed, BiomeSeed, BiomeScale, TerrainNoiseScale, AdditionToNoise, PostScale, AmountOfBlockTypes, Biomes, BlockTypes);
+            byte BlockTypeIndex = GenerateBlock(BlockWorldPos, Seed, BiomeSeed, BiomeScale, TerrainNoiseScale, Biomes, BlockTypes, TrueIndex);
 
             Tilemap[TrueIndex] = BlockTypeIndex;
         }
@@ -610,6 +568,106 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         public float2 UV; // is this precise enough?
     }
 
+    [BurstCompile]
+    struct TilemapToMesh : IJobFor
+    {
+        [ReadOnly]
+        public NativeArray<byte> TilemapArray;
+
+        [ReadOnly]
+        public BlobAssetReference<BlobArray<BlockType>> BlockTypes;
+
+        [NativeDisableContainerSafetyRestriction]
+        [WriteOnly]
+        public NativeArray<Vertex> Vertices;
+
+        [NativeDisableContainerSafetyRestriction]
+        [WriteOnly]
+        public NativeArray<uint> Indices;
+
+        [ReadOnly]
+        public float SpriteWidth;
+
+        [ReadOnly]
+        public float SpriteHeight;
+
+        [ReadOnly]
+        public int ScreenWidth;
+
+        [ReadOnly]
+        public int BlockGridWidth;
+
+        [ReadOnly]
+        public int ChunkWidth;
+
+        [ReadOnly]
+        public int ChunkWidthSquared;
+
+        [ReadOnly]
+        public int ChunkGridWidth;
+
+        [ReadOnly]
+        public int2 BottomLeftOfScreen;
+
+        public void Execute(int i)
+        {
+            int2 iWorldPos = PosFromIndex(i, ScreenWidth);
+
+            int2 TrueWorldPos = iWorldPos + BottomLeftOfScreen;
+
+            if ((TrueWorldPos.x < 0 || TrueWorldPos.y < 0) || (TrueWorldPos.x > BlockGridWidth || TrueWorldPos.y > BlockGridWidth))
+            {
+                return;
+            }
+
+            int2 ChunkPos = ChunkPosFromBlockPos(TrueWorldPos, ChunkWidth);
+            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+            int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
+
+            int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
+
+            int2 LocalPos = TrueWorldPos - WorldPosStart;
+
+            int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
+
+            int BlockIndex = BlockIndexStart + LocalIndex;
+
+            byte BlockTypeIndex = TilemapArray[BlockIndex];
+
+            if (BlockTypeIndex == 0)
+            {
+                return;
+            }
+
+            BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
+
+            int VertexStart = i * 4; // if every tile takes up 4 vertices then we use i * 4 to get the correct starting vertex
+            int IndexStart = i * 6; // read above and replace some words, and you might understand my nonsense
+
+            UnsafeElementAt(Vertices, VertexStart).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(0.5f * BlockInfo.RenderingSize.x, 0.5f * BlockInfo.RenderingSize.y, 0); // top right
+            UnsafeElementAt(Vertices, VertexStart).UV = BlockInfo.UV + new float2(SpriteWidth, SpriteHeight);
+
+            UnsafeElementAt(Vertices, VertexStart + 1).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(0.5f * BlockInfo.RenderingSize.x, -0.5f * BlockInfo.RenderingSize.y, 0); // bottom right
+            UnsafeElementAt(Vertices, VertexStart + 1).UV = BlockInfo.UV + new float2(SpriteWidth, 0);
+
+            UnsafeElementAt(Vertices, VertexStart + 2).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(-0.5f * BlockInfo.RenderingSize.x, 0.5f * BlockInfo.RenderingSize.y, 0); // top left
+            UnsafeElementAt(Vertices, VertexStart + 2).UV = BlockInfo.UV + new float2(0, SpriteHeight);
+
+            UnsafeElementAt(Vertices, VertexStart + 3).Pos = new float3(TrueWorldPos, BlockInfo.Depth) + new float3(-0.5f * BlockInfo.RenderingSize.x, -0.5f * BlockInfo.RenderingSize.y, 0); // bottom left
+            UnsafeElementAt(Vertices, VertexStart + 3).UV = BlockInfo.UV;
+
+            uint UVertexStart = (uint)VertexStart;
+
+            Indices[IndexStart] = UVertexStart;
+            Indices[IndexStart + 1] = UVertexStart + 1;
+            Indices[IndexStart + 2] = UVertexStart + 2;
+
+            Indices[IndexStart + 3] = UVertexStart + 1;
+            Indices[IndexStart + 4] = UVertexStart + 3;
+            Indices[IndexStart + 5] = UVertexStart + 2;
+        }
+    }
+
     #endregion
 
     #region Collision Stuff
@@ -649,10 +707,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
                 continue;
             }
 
-            if (CheckForCollision(PlayerPos, PlayerSize, BlockPos))
-            {
-                BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
+            BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
 
+            if (CheckForCollision(PlayerPos, PlayerSize, BlockPos, BlockInfo.CollisionSize))
+            {
                 if (BlockInfo.StatsChange.Strength < PlayerStats.Strength)
                 {
                     if (BlockInfo.Behaviour.HasFlag(CollisionBehaviour.Consume))
@@ -671,14 +729,15 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         }
     }
 
-    public bool CheckForCollision(float2 PlayerPos, float2 PlayerSize, int2 BlockPos)
+    public bool CheckForCollision(float2 PlayerPos, float2 PlayerSize, float2 BlockPos, float2 BlockSize)
     {
-        PlayerPos += PlayerSize * -0.5f + 0.5f;
+        PlayerPos += PlayerSize * -0.5f + 0.5f; // why the hell do these 2 lines exist???????
+        BlockPos += BlockSize * -0.5f + 0.5f;
 
         if ( // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection so good
-            PlayerPos.x < BlockPos.x + 1 &&
+            PlayerPos.x < BlockPos.x + BlockSize.x &&
             PlayerPos.x + PlayerSize.x > BlockPos.x &&
-            PlayerPos.y < BlockPos.y + 1 &&
+            PlayerPos.y < BlockPos.y + BlockSize.y &&
             PlayerPos.y + PlayerSize.y > BlockPos.y
             )
         {

@@ -25,7 +25,7 @@ public class TilemapSettings : MonoBehaviour
 
     public BlockTypeMono[] Blocktypes;
 
-    public TilemapSystem.Biome[] Biomes;
+    public BiomeMono[] Biomes;
 }
 
 public class TilemapBaker : Baker<TilemapSettings>
@@ -66,6 +66,8 @@ public class TilemapBaker : Baker<TilemapSettings>
                 UV = new float2(SpriteWidth*BT.BlockSprite,0), // bottom left hand corner should be (1/NumSprites*Sprite, 0)
                 //BlockMat = BT.BlockMat,
                 Depth = BT.Depth,
+                RenderingSize = BT.RenderingSize,
+                CollisionSize = BT.CollisionSize,
                 Behaviour = BT.Behaviour,
                 StatsChange = new Stats()
                 {
@@ -78,7 +80,8 @@ public class TilemapBaker : Baker<TilemapSettings>
                     WalkSpeed = BT.StatsChange.WalkSpeed
                 },
                 MinNoise = BT.MinNoise,
-                MaxNoise = BT.MaxNoise
+                MaxNoise = BT.MaxNoise,
+                Chance = BT.PercentChance/100
             };
         }
 
@@ -89,7 +92,16 @@ public class TilemapBaker : Baker<TilemapSettings>
 
         for (int i = 0; i < authoring.Biomes.Length; i++)
         {
-            BiomesArrayBuilder[i] = authoring.Biomes[i];
+            var BiomeInfo = authoring.Biomes[i];
+
+            BiomesArrayBuilder[i] = new TilemapSystem.Biome()
+            {
+                IdealConditions = BiomeInfo.IdealConditions,
+                StartingPlantIndex = BiomeInfo.StartingPlantIndex,
+                PlantLength = BiomeInfo.PlantLength,
+                StartingBlockIndex = BiomeInfo.StartingBlockIndex,
+                BlockLength = BiomeInfo.BlockLength
+            };
         }
 
         var entity = GetEntity(TransformUsageFlags.Renderable);
@@ -148,12 +160,17 @@ public struct BlockTypeMono // no id int needed, just use position in array
     //public BlockMaterial BlockMat;
     public int Depth;
 
+    public float2 RenderingSize;
+    public float2 CollisionSize;
+
     public CollisionBehaviour Behaviour;
 
     public StatsMono StatsChange;
 
     public float MinNoise;
     public float MaxNoise;
+
+    public float PercentChance;
 }
 
 public struct BlockType
@@ -162,12 +179,17 @@ public struct BlockType
     //public BlockMaterial BlockMat; removed for now
     public int Depth;
 
+    public float2 RenderingSize;
+    public float2 CollisionSize;
+
     public CollisionBehaviour Behaviour;
 
     public Stats StatsChange;
 
     public float MinNoise;
     public float MaxNoise;
+
+    public float Chance;
 }
 
 [System.Serializable]
@@ -196,4 +218,20 @@ public enum CollisionBehaviour
 {
     None = 0,
     Consume = 1
+}
+
+[System.Serializable]
+public struct BiomeMono
+{
+    public string BiomeName; //discarded
+
+    public float3 IdealConditions;
+
+    public byte StartingPlantIndex;
+    public int PlantLength;
+
+    public byte StartingBlockIndex;
+    public int BlockLength;
+
+    // add terrain generation scale and stuff later
 }

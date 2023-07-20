@@ -169,12 +169,18 @@ MonoBehaviour:
   PostTerrainNoiseScale: 10
   DebugChunk0: 1
   DebugBiomeDraw: 0
-  SpriteGridWidth: 34
+  SpriteGridWidth: 42
   SpriteGridHeight: 1
   Blocktypes:
   - BlockName: None
-    BlockSprite: 1
+    BlockSprite: 6
     Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
     Behaviour: 0
     StatsChange:
       Size:
@@ -188,25 +194,39 @@ MonoBehaviour:
       WalkSpeed: 0
     MinNoise: 0
     MaxNoise: 0
+    PercentChance: 0
   - BlockName: The one I don't remember the name of.
-    BlockSprite: 3
+    BlockSprite: 8
     Depth: 3
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
     Behaviour: 1
     StatsChange:
       Size:
-        x: -0.01
-        y: -0.01
+        x: 0
+        y: 0
       Health: 0
-      Stamina: 0
+      Stamina: 1
       Strength: 0
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
     MinNoise: -0.7
     MaxNoise: -0.3
+    PercentChance: 0
   - BlockName: SwishySwashy
-    BlockSprite: 4
+    BlockSprite: 14
     Depth: 2
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
     Behaviour: 0
     StatsChange:
       Size:
@@ -220,9 +240,16 @@ MonoBehaviour:
       WalkSpeed: 0
     MinNoise: -0.3
     MaxNoise: 0
+    PercentChance: 0
   - BlockName: Circus Rock
-    BlockSprite: 2
+    BlockSprite: 7
     Depth: 2
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
     Behaviour: 1
     StatsChange:
       Size:
@@ -236,9 +263,16 @@ MonoBehaviour:
       WalkSpeed: 0
     MinNoise: 0
     MaxNoise: 1
+    PercentChance: 0
   - BlockName: pink
-    BlockSprite: 28
+    BlockSprite: 36
     Depth: 2
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
     Behaviour: 0
     StatsChange:
       Size:
@@ -252,9 +286,16 @@ MonoBehaviour:
       WalkSpeed: 0
     MinNoise: -0.5
     MaxNoise: 0
+    PercentChance: 10
   - BlockName: orange
-    BlockSprite: 29
+    BlockSprite: 37
     Depth: 2
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
     Behaviour: 0
     StatsChange:
       Size:
@@ -268,23 +309,95 @@ MonoBehaviour:
       WalkSpeed: 0
     MinNoise: 0
     MaxNoise: 1
-  Biomes:
-  - IdealConditions:
-      x: -0.8
+    PercentChance: 2
+  - BlockName: the heart one
+    BlockSprite: 20
+    Depth: 2
+    RenderingSize:
+      x: 0.8
       y: 0.8
-      z: 0
-    StartingPlantIndex: 0
-    PlantLength: 0
+    CollisionSize:
+      x: 0.7
+      y: 0.7
+    Behaviour: 1
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 5
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
+  - BlockName: velvet low damage
+    BlockSprite: 17
+    Depth: 1
+    RenderingSize:
+      x: 1.3
+      y: 1.3
+    CollisionSize:
+      x: 1.3
+      y: 1.3
+    Behaviour: 1
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: -4
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
+  - BlockName: velvet low damage
+    BlockSprite: 17
+    Depth: 1
+    RenderingSize:
+      x: 1.3
+      y: 1.3
+    CollisionSize:
+      x: 1.3
+      y: 1.3
+    Behaviour: 1
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: -4
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 50
+  Biomes:
+  - BiomeName: Mixed Jungle
+    IdealConditions:
+      x: -0.5
+      y: 0
+      z: 0.2
+    StartingPlantIndex: 4
+    PlantLength: 4
     StartingBlockIndex: 1
     BlockLength: 3
-  - IdealConditions:
-      x: 0
+  - BiomeName: Velvet hell
+    IdealConditions:
+      x: 1
       y: 0.7
-      z: 0.5
-    StartingPlantIndex: 0
-    PlantLength: 0
-    StartingBlockIndex: 4
-    BlockLength: 2
+      z: 0
+    StartingPlantIndex: 8
+    PlantLength: 1
+    StartingBlockIndex: 1
+    BlockLength: 1
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
@@ -292,13 +405,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1194106974}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1194106977
 MeshFilter:
@@ -405,11 +518,89 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1496029461}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1998787020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1998787022}
+  - component: {fileID: 1998787021}
+  m_Layer: 0
+  m_Name: Biome Settings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1998787021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1998787020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7eaa2763188a3042ad77e3b8a5a80fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ButtonTest: 0
+  RenderLocation: {fileID: 0}
+  Biomes:
+  - BiomeName: 
+    ReferenceColour: {r: 0.25140637, g: 0.8584906, b: 0.19032574, a: 1}
+    Size:
+      x: 1
+      y: 1
+    Pos:
+      x: 0
+      y: 0
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 0
+    BlockLength: 0
+  - BiomeName: 
+    ReferenceColour: {r: 0.19215685, g: 0.21666358, b: 0.85882354, a: 1}
+    Size:
+      x: 1
+      y: 1
+    Pos:
+      x: 1
+      y: 0
+    StartingPlantIndex: 0
+    PlantLength: 0
+    StartingBlockIndex: 0
+    BlockLength: 0
+--- !u!4 &1998787022
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1998787020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 1194106976}
+  - {fileID: 1496029463}
+  - {fileID: 1998787022}
