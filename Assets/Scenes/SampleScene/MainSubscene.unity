@@ -162,8 +162,7 @@ MonoBehaviour:
   ChunkWidth: 200
   BiomeScale:
     x: 0.01
-    y: 0.08
-    z: 0.05
+    y: 0.01
   TerrainNoiseScale: 0.05
   AdditionToTerrainNoise: 0.696
   PostTerrainNoiseScale: 10
@@ -182,6 +181,7 @@ MonoBehaviour:
       x: 1
       y: 1
     Behaviour: 0
+    StrengthToCross: 0
     StatsChange:
       Size:
         x: 0
@@ -195,32 +195,57 @@ MonoBehaviour:
     MinNoise: 0
     MaxNoise: 0
     PercentChance: 0
-  - BlockName: The one I don't remember the name of.
-    BlockSprite: 8
-    Depth: 3
+  - BlockName: nasty swish
+    BlockSprite: 6
+    Depth: 1
     RenderingSize:
       x: 1
       y: 1
     CollisionSize:
       x: 1
       y: 1
-    Behaviour: 1
+    Behaviour: 0
+    StrengthToCross: 0
     StatsChange:
       Size:
         x: 0
         y: 0
       Health: 0
-      Stamina: 1
+      Stamina: 0
       Strength: 0
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-    MinNoise: -0.7
-    MaxNoise: -0.3
-    PercentChance: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 30
+  - BlockName: warp swish
+    BlockSprite: 6
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 0
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 5
   - BlockName: SwishySwashy
     BlockSprite: 14
-    Depth: 2
+    Depth: 1
     RenderingSize:
       x: 1
       y: 1
@@ -228,6 +253,7 @@ MonoBehaviour:
       x: 1
       y: 1
     Behaviour: 0
+    StrengthToCross: 0
     StatsChange:
       Size:
         x: 0
@@ -238,12 +264,84 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-    MinNoise: -0.3
+    MinNoise: 0
     MaxNoise: 0
-    PercentChance: 0
-  - BlockName: Circus Rock
+    PercentChance: 100
+  - BlockName: flower swish
+    BlockSprite: 15
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 0
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 30
+  - BlockName: warp swish
+    BlockSprite: 6
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 0
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 5
+  - BlockName: SwishySwashy
+    BlockSprite: 14
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 0
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 100
+  - BlockName: circus rock
     BlockSprite: 7
-    Depth: 2
+    Depth: 1
     RenderingSize:
       x: 1
       y: 1
@@ -251,29 +349,7 @@ MonoBehaviour:
       x: 1
       y: 1
     Behaviour: 1
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: 0
-      Stamina: 0
-      Strength: 1
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-    MinNoise: 0
-    MaxNoise: 1
-    PercentChance: 0
-  - BlockName: pink
-    BlockSprite: 36
-    Depth: 2
-    RenderingSize:
-      x: 1
-      y: 1
-    CollisionSize:
-      x: 1
-      y: 1
-    Behaviour: 0
+    StrengthToCross: 2
     StatsChange:
       Size:
         x: 0
@@ -284,47 +360,121 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-    MinNoise: -0.5
-    MaxNoise: 0
-    PercentChance: 10
-  - BlockName: orange
-    BlockSprite: 37
-    Depth: 2
+    MinNoise: 0.2
+    MaxNoise: 1
+    PercentChance: 0
+  - BlockName: blue flower rock
+    BlockSprite: 8
+    Depth: 1
     RenderingSize:
       x: 1
       y: 1
     CollisionSize:
       x: 1
       y: 1
-    Behaviour: 0
+    Behaviour: 1
+    StrengthToCross: 0
     StatsChange:
       Size:
         x: 0
         y: 0
       Health: 0
       Stamina: 0
-      Strength: 1
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: -0.9
+    MaxNoise: 0.2
+    PercentChance: 0
+  - BlockName: velvet slicer low damage
+    BlockSprite: 17
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
     MinNoise: 0
-    MaxNoise: 1
-    PercentChance: 2
-  - BlockName: the heart one
-    BlockSprite: 20
-    Depth: 2
+    MaxNoise: 0
+    PercentChance: 40
+  - BlockName: velvet slicer medium damage
+    BlockSprite: 18
+    Depth: 1
     RenderingSize:
-      x: 0.8
-      y: 0.8
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
+  - BlockName: velvet fruit
+    BlockSprite: 16
+    Depth: 1
+    RenderingSize:
+      x: 0.7
+      y: 0.7
     CollisionSize:
       x: 0.7
       y: 0.7
     Behaviour: 1
+    StrengthToCross: 0
     StatsChange:
       Size:
         x: 0
         y: 0
-      Health: 5
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 3
+  - BlockName: heart small
+    BlockSprite: 20
+    Depth: 1
+    RenderingSize:
+      x: 0.5
+      y: 0.5
+    CollisionSize:
+      x: 0.4
+      y: 0.4
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
       Stamina: 0
       Strength: 0
       Speed: 0
@@ -333,71 +483,102 @@ MonoBehaviour:
     MinNoise: 0
     MaxNoise: 0
     PercentChance: 10
-  - BlockName: velvet low damage
-    BlockSprite: 17
+  - BlockName: heart medium
+    BlockSprite: 20
     Depth: 1
     RenderingSize:
-      x: 1.3
-      y: 1.3
-    CollisionSize:
-      x: 1.3
-      y: 1.3
-    Behaviour: 1
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: -4
-      Stamina: 0
-      Strength: 0
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-    MinNoise: 0
-    MaxNoise: 0
-    PercentChance: 10
-  - BlockName: velvet low damage
-    BlockSprite: 17
-    Depth: 1
-    RenderingSize:
-      x: 1.3
-      y: 1.3
-    CollisionSize:
-      x: 1.3
-      y: 1.3
-    Behaviour: 1
-    StatsChange:
-      Size:
-        x: 0
-        y: 0
-      Health: -4
-      Stamina: 0
-      Strength: 0
-      Speed: 0
-      SprintSpeed: 0
-      WalkSpeed: 0
-    MinNoise: 0
-    MaxNoise: 0
-    PercentChance: 50
-  Biomes:
-  - BiomeName: Mixed Jungle
-    IdealConditions:
-      x: -0.5
-      y: 0
-      z: 0.2
-    StartingPlantIndex: 4
-    PlantLength: 4
-    StartingBlockIndex: 1
-    BlockLength: 3
-  - BiomeName: Velvet hell
-    IdealConditions:
-      x: 1
+      x: 0.7
       y: 0.7
-      z: 0
-    StartingPlantIndex: 8
-    PlantLength: 1
-    StartingBlockIndex: 1
-    BlockLength: 1
+    CollisionSize:
+      x: 0.6
+      y: 0.6
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
+  - BlockName: heart large
+    BlockSprite: 20
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 0.9
+      y: 0.9
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
+  - BlockName: heart small
+    BlockSprite: 20
+    Depth: 1
+    RenderingSize:
+      x: 0.5
+      y: 0.5
+    CollisionSize:
+      x: 0.4
+      y: 0.4
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
+  - BlockName: velvet slicer low damage
+    BlockSprite: 17
+    Depth: 1
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Behaviour: 1
+    StrengthToCross: 0
+    StatsChange:
+      Size:
+        x: 0
+        y: 0
+      Health: 0
+      Stamina: 0
+      Strength: 0
+      Speed: 0
+      SprintSpeed: 0
+      WalkSpeed: 0
+    MinNoise: 0
+    MaxNoise: 0
+    PercentChance: 10
 --- !u!4 &1194106976
 Transform:
   m_ObjectHideFlags: 0
@@ -555,33 +736,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7eaa2763188a3042ad77e3b8a5a80fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ButtonTest: 0
-  RenderLocation: {fileID: 0}
+  DebugPos:
+    x: -1.77
+    y: -1.44
   Biomes:
-  - BiomeName: 
-    ReferenceColour: {r: 0.25140637, g: 0.8584906, b: 0.19032574, a: 1}
+  - BiomeName: Swishy Bad
+    ReferenceColour: {r: 0.85882354, g: 0.19215685, b: 0.513965, a: 1}
     Size:
       x: 1
       y: 1
     Pos:
       x: 0
       y: 0
-    StartingPlantIndex: 0
-    PlantLength: 0
+    StartingPlantIndex: 1
+    PlantLength: 3
     StartingBlockIndex: 0
     BlockLength: 0
-  - BiomeName: 
-    ReferenceColour: {r: 0.19215685, g: 0.21666358, b: 0.85882354, a: 1}
+  - BiomeName: Swishy Good
+    ReferenceColour: {r: 0.627183, g: 0.19215685, b: 0.85882354, a: 1}
+    Size:
+      x: 1
+      y: 2
+    Pos:
+      x: 1
+      y: 0
+    StartingPlantIndex: 4
+    PlantLength: 3
+    StartingBlockIndex: 0
+    BlockLength: 0
+  - BiomeName: velvet thorns
+    ReferenceColour: {r: 1, g: 0.14725646, b: 0, a: 1}
     Size:
       x: 1
       y: 1
     Pos:
+      x: 0
+      y: 1
+    StartingPlantIndex: 9
+    PlantLength: 3
+    StartingBlockIndex: 7
+    BlockLength: 2
+  - BiomeName: health forest
+    ReferenceColour: {r: 0, g: 1, b: 0.4357667, a: 1}
+    Size:
       x: 1
+      y: 1
+    Pos:
+      x: 0
+      y: 2
+    StartingPlantIndex: 12
+    PlantLength: 3
+    StartingBlockIndex: 7
+    BlockLength: 2
+  - BiomeName: health forest
+    ReferenceColour: {r: 0, g: 1, b: 0.4357667, a: 1}
+    Size:
+      x: 2
+      y: 2
+    Pos:
+      x: 2
       y: 0
-    StartingPlantIndex: 0
-    PlantLength: 0
-    StartingBlockIndex: 0
-    BlockLength: 0
+    StartingPlantIndex: 15
+    PlantLength: 2
+    StartingBlockIndex: 7
+    BlockLength: 2
 --- !u!4 &1998787022
 Transform:
   m_ObjectHideFlags: 0

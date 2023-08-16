@@ -11,7 +11,7 @@ public class TilemapSettings : MonoBehaviour
     public int2 Pos;
     public int ChunkWidth;
 
-    public float3 BiomeScale;
+    public float2 BiomeScale;
 
     public float TerrainNoiseScale;
     public float AdditionToTerrainNoise;
@@ -24,8 +24,6 @@ public class TilemapSettings : MonoBehaviour
     public int SpriteGridHeight;
 
     public BlockTypeMono[] Blocktypes;
-
-    public BiomeMono[] Biomes;
 }
 
 public class TilemapBaker : Baker<TilemapSettings>
@@ -35,12 +33,6 @@ public class TilemapBaker : Baker<TilemapSettings>
         if (authoring.Blocktypes.Length <= 0)
         {
             Debug.LogError("Can't bake tilemap due to lack of BlockTypes.");
-            return;
-        }
-
-        if (authoring.Biomes.Length <= 0)
-        {
-            Debug.LogError("Can't bake tilemap due to lack of Biomes.");
             return;
         }
 
@@ -69,6 +61,7 @@ public class TilemapBaker : Baker<TilemapSettings>
                 RenderingSize = BT.RenderingSize,
                 CollisionSize = BT.CollisionSize,
                 Behaviour = BT.Behaviour,
+                StrengthToCross = BT.StrengthToCross,
                 StatsChange = new Stats()
                 {
                     Size = BT.StatsChange.Size,
@@ -82,25 +75,6 @@ public class TilemapBaker : Baker<TilemapSettings>
                 MinNoise = BT.MinNoise,
                 MaxNoise = BT.MaxNoise,
                 Chance = BT.PercentChance/100
-            };
-        }
-
-        var BiomesBuilder = new BlobBuilder(Allocator.Temp);
-        ref var BiomesArray = ref BiomesBuilder.ConstructRoot<BlobArray<TilemapSystem.Biome>>();
-
-        BlobBuilderArray<TilemapSystem.Biome> BiomesArrayBuilder = BiomesBuilder.Allocate(ref BiomesArray, authoring.Biomes.Length);
-
-        for (int i = 0; i < authoring.Biomes.Length; i++)
-        {
-            var BiomeInfo = authoring.Biomes[i];
-
-            BiomesArrayBuilder[i] = new TilemapSystem.Biome()
-            {
-                IdealConditions = BiomeInfo.IdealConditions,
-                StartingPlantIndex = BiomeInfo.StartingPlantIndex,
-                PlantLength = BiomeInfo.PlantLength,
-                StartingBlockIndex = BiomeInfo.StartingBlockIndex,
-                BlockLength = BiomeInfo.BlockLength
             };
         }
 
@@ -121,11 +95,9 @@ public class TilemapBaker : Baker<TilemapSettings>
             SpriteWidth = SpriteWidth,
             SpriteHeight = 1f/authoring.SpriteGridHeight,
             BlockTypes = BlockTypesBuilder.CreateBlobAssetReference<BlobArray<BlockType>>(Allocator.Persistent),
-            Biomes = BiomesBuilder.CreateBlobAssetReference<BlobArray<TilemapSystem.Biome>>(Allocator.Persistent)
         });
 
         BlockTypesBuilder.Dispose();
-        BiomesBuilder.Dispose();
     }
 }
 
@@ -136,7 +108,7 @@ public struct TilemapSettingsData : IComponentData
     public int2 Pos;
     public int ChunkWidth;
 
-    public float3 BiomeScale;
+    public float2 BiomeScale;
 
     public float TerrainNoiseScale;
     public float AdditionToTerrainNoise;
@@ -149,7 +121,6 @@ public struct TilemapSettingsData : IComponentData
     public float SpriteHeight;
 
     public BlobAssetReference<BlobArray<BlockType>> BlockTypes;
-    public BlobAssetReference<BlobArray<TilemapSystem.Biome>> Biomes;
 }
 
 [System.Serializable]
@@ -164,6 +135,8 @@ public struct BlockTypeMono // no id int needed, just use position in array
     public float2 CollisionSize;
 
     public CollisionBehaviour Behaviour;
+
+    public uint StrengthToCross;
 
     public StatsMono StatsChange;
 
@@ -183,6 +156,8 @@ public struct BlockType
     public float2 CollisionSize;
 
     public CollisionBehaviour Behaviour;
+
+    public uint StrengthToCross;
 
     public Stats StatsChange;
 
@@ -218,20 +193,4 @@ public enum CollisionBehaviour
 {
     None = 0,
     Consume = 1
-}
-
-[System.Serializable]
-public struct BiomeMono
-{
-    public string BiomeName; //discarded
-
-    public float3 IdealConditions;
-
-    public byte StartingPlantIndex;
-    public int PlantLength;
-
-    public byte StartingBlockIndex;
-    public int BlockLength;
-
-    // add terrain generation scale and stuff later
 }

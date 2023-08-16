@@ -31,9 +31,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     uint Seed;
 
-    float3 BiomeSeed;
+    float2 BiomeSeed;
 
-    float3 BiomeScale;
+    float2 BiomeScale;
 
     float TerrainNoiseScale;
     float AdditionToTerrainNoise;
@@ -59,6 +59,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     public void OnStartRunning(ref SystemState state)
     {
         ref var TilemapSettingsInfo = ref SystemAPI.GetSingletonRW<TilemapSettingsData>().ValueRW;
+        ref var BiomeSettingsInfo = ref SystemAPI.GetSingletonRW<BiomeSettingsData>().ValueRW;
 
         //float LowestValue = 100f;
         //float HighestValue = -100f;
@@ -97,7 +98,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         DebugChunk0 = TilemapSettingsInfo.DebugChunk0;
 
         BlockTypes = TilemapSettingsInfo.BlockTypes;
-        Biomes = TilemapSettingsInfo.Biomes;
+        Biomes = BiomeSettingsInfo.Biomes;
 
         ChunkWidth = TilemapSettingsInfo.ChunkWidth;
         ChunkWidthSquared = ChunkWidth * ChunkWidth;
@@ -107,7 +108,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         Seed = (uint)SystemAPI.Time.ElapsedTime; // so sketchy
         SafePosRandom = Random.CreateFromIndex(Seed);
 
-        BiomeSeed = SafePosRandom.NextFloat3(-5000, 5000); // SUPER SKETCHY
+        BiomeSeed = SafePosRandom.NextFloat2(-5000, 5000); // SUPER SKETCHY
 
         SpriteWidth = TilemapSettingsInfo.SpriteWidth;
         SpriteHeight = TilemapSettingsInfo.SpriteHeight;
@@ -320,37 +321,18 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     #region Generation Functions, Jobs, and structs
 
-    [System.Serializable]
-    public struct Biome
+    public static int FindClosestBiome(float2 BlockConditions, BlobAssetReference<BlobArray<Biome>> Biomes)
     {
-        public float3 IdealConditions;
-
-        public byte StartingPlantIndex;
-        public int PlantLength;
-
-        public byte StartingBlockIndex;
-        public int BlockLength;
-
-        // add terrain generation scale and stuff later
-    }
-
-    public static int FindClosestBiome(float3 BlockConditions, BlobAssetReference<BlobArray<Biome>> Biomes)
-    {
-        float LowestDistance = float.MaxValue;
-        int BestBiomeIndex = 0;
-
         for (int i = 0; i < Biomes.Value.Length; i++)
         {
-            float DistanceFromBiome = math.distancesq(BlockConditions, Biomes.Value[i].IdealConditions);
-
-            if (DistanceFromBiome < LowestDistance)
+            if (IsColliding(BlockConditions, 0, Biomes.Value[i].Pos, Biomes.Value[i].Size))
             {
-                LowestDistance = DistanceFromBiome;
-                BestBiomeIndex = i;
+                return i;
             }
         }
 
-        return BestBiomeIndex;
+        Debug.Log("biome not found");
+        return 0; // fail safe biome
     }
 
     [BurstCompile]
@@ -403,13 +385,14 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         return WorldPosStart; // fail deadly
     }
 
-    public static byte GenerateBlock(int2 Pos, uint Seed, float3 BiomeSeed, float3 BiomeScale, float Scale, BlobAssetReference<BlobArray<Biome>> Biomes, BlobAssetReference<BlobArray<BlockType>> BlockTypes, int TrueIndex) // extremely bad, don't like
+    public static byte GenerateBlock(int2 Pos, uint Seed, float2 BiomeSeed, float2 BiomeScale, float Scale, BlobAssetReference<BlobArray<Biome>> Biomes, BlobAssetReference<BlobArray<BlockType>> BlockTypes, int TrueIndex) // extremely bad, don't like
     {
-        float3 BlockConditions = new float3(
+        float2 BlockConditions = new float2(
             noise.snoise(new float2(Pos.x, Pos.y + BiomeSeed.x) * BiomeScale.x),
-            noise.snoise(new float2(Pos.x, Pos.y + BiomeSeed.y) * BiomeScale.y),
-            noise.snoise(new float2(Pos.x, Pos.y + BiomeSeed.z) * BiomeScale.z)
-            ); // rain level, temperature, soil quality (or really anything, it doesn't matter much...)
+            noise.snoise(new float2(Pos.x, Pos.y + BiomeSeed.y) * BiomeScale.y)
+            );
+
+        BlockConditions = (BlockConditions + 1) * 0.5f; //make it so block conditions is in range of 0-1
 
         int BiomeIndex = FindClosestBiome(BlockConditions, Biomes);
 
@@ -493,9 +476,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         public uint Seed;
 
-        public float3 BiomeSeed;
+        public float2 BiomeSeed;
 
-        public float3 BiomeScale;
+        public float2 BiomeScale;
 
         public float TerrainNoiseScale;
 
@@ -709,9 +692,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
 
-            if (CheckForCollision(PlayerPos, PlayerSize, BlockPos, BlockInfo.CollisionSize))
+            if (IsColliding(PlayerPos + PlayerSize * -0.5f + 0.5f, PlayerSize, BlockPos + BlockInfo.CollisionSize * -0.5f + 0.5f, BlockInfo.CollisionSize)) // aabb usually expect pos to be the bottom left corner of the sprite, which is not true for us, hence the weird multiplication of positions and stuff
             {
-                if (BlockInfo.StatsChange.Strength < PlayerStats.Strength)
+                if (BlockInfo.StrengthToCross < PlayerStats.Strength)
                 {
                     if (BlockInfo.Behaviour.HasFlag(CollisionBehaviour.Consume))
                     {
@@ -729,16 +712,13 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         }
     }
 
-    public bool CheckForCollision(float2 PlayerPos, float2 PlayerSize, float2 BlockPos, float2 BlockSize)
+    public static bool IsColliding(float2 Pos1, float2 Size1, float2 Pos2, float2 Size2)
     {
-        PlayerPos += PlayerSize * -0.5f + 0.5f; // why the hell do these 2 lines exist???????
-        BlockPos += BlockSize * -0.5f + 0.5f;
-
         if ( // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection so good
-            PlayerPos.x < BlockPos.x + BlockSize.x &&
-            PlayerPos.x + PlayerSize.x > BlockPos.x &&
-            PlayerPos.y < BlockPos.y + BlockSize.y &&
-            PlayerPos.y + PlayerSize.y > BlockPos.y
+            Pos1.x < Pos2.x + Size2.x &&
+            Pos1.x + Size1.x > Pos2.x &&
+            Pos1.y < Pos2.y + Size2.y &&
+            Pos1.y + Size1.y > Pos2.y
             )
         {
             return true;

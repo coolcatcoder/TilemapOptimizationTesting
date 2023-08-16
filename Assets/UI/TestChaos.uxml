@@ -1,0 +1,68 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+        <ui:VisualElement name="Stats" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); right: auto; left: 10%; top: 20%; visibility: visible; display: none;">
+            <ui:Label tabindex="-1" text="Testing?" display-tooltip-when-elided="true" name="BiomeText" focusable="false" style="font-size: 30%; color: rgb(255, 255, 255); -unity-text-align: upper-left;" />
+            <ui:Label tabindex="-1" text="Testing?" display-tooltip-when-elided="true" name="StatsText" style="font-size: 50%; color: rgb(255, 255, 255);" />
+            <ui:Button text="Almanac" display-tooltip-when-elided="true" name="StatsAlmanac" style="flex-wrap: nowrap; width: 10%;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="PerksAndCurses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: 75%; height: 90%; left: 12.5%; bottom: auto; align-items: center; flex-direction: column; visibility: visible; display: none;">
+            <ui:Label tabindex="-1" text="Total Cost: 1" display-tooltip-when-elided="true" name="Cost" style="color: rgb(122, 0, 207); font-size: 50%;" />
+            <ui:VisualElement name="PerksAndCursesButtons" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; height: auto;">
+                <ui:VisualElement name="Perks" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; height: auto;">
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="P1" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="P2" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="P3" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="P4" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="P5" />
+                </ui:VisualElement>
+                <ui:VisualElement name="Curses" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; height: auto;">
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="C1" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="C2" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="C3" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="C4" />
+                    <ui:Button text="Button" display-tooltip-when-elided="true" name="C5" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Button text="Continue\n(Total cost must be 0!)" display-tooltip-when-elided="true" name="PerksAndCursesContinue" style="position: relative; left: auto; top: auto; align-self: auto; bottom: auto;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="GameOver" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); bottom: auto; visibility: visible; display: none;">
+            <ui:Label tabindex="-1" text="GameOver" display-tooltip-when-elided="true" name="GameOverText" style="-unity-text-align: upper-center; color: rgb(159, 17, 17); font-size: 100%; left: auto; bottom: auto;" />
+            <ui:Button text="Continue" display-tooltip-when-elided="true" name="GameOverContinue" style="width: 30%; left: 35%; position: relative; top: 30%;" />
+            <ui:Button text="Main Menu" display-tooltip-when-elided="true" name="GoToMainMenu" style="width: 30%; left: 35%; position: relative; top: 30%;" />
+            <ui:Button text="Open Almanac" display-tooltip-when-elided="true" name="GameOverAlmanac" style="width: 30%; left: 35%; position: relative; top: 30%;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="MainMenu" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: flex; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
+            <ui:Label tabindex="-1" text="SmallSight" display-tooltip-when-elided="true" style="font-size: 90%; color: rgb(57, 9, 149); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(233, 30, 196);" />
+            <ui:Button text="Settings" display-tooltip-when-elided="true" name="ChangeSettings" />
+            <ui:Button text="Start Adventure!" display-tooltip-when-elided="true" name="StartGame" />
+            <ui:Button text="Continue!" display-tooltip-when-elided="true" name="MainMenuContinue" style="visibility: visible; display: none;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Almanac" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; height: auto; left: auto; align-items: center; align-self: auto; justify-content: flex-start; bottom: auto; visibility: visible; display: none; flex-direction: column; flex-wrap: wrap-reverse;">
+            <ui:EnumField label="World" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="WorldDropDown" style="color: rgb(10, 0, 255); -unity-text-outline-color: rgb(217, 7, 216); -unity-text-outline-width: 1.2px; font-size: 35px; -unity-text-align: upper-left; white-space: normal;" />
+            <ui:VisualElement name="PageHolder" style="flex-grow: 1; background-color: rgb(43, 173, 188); width: 50%; height: 50%;">
+                <ui:Label tabindex="-1" text="Some Plants Name" display-tooltip-when-elided="true" name="PageTitle" style="width: auto; white-space: normal; height: auto; background-color: rgba(43, 173, 188, 0); font-size: 30px; -unity-font-style: bold; -unity-text-align: upper-left;" />
+                <ui:Label tabindex="-1" text="Some long rambling nonsense! Something about stats maybe! Other chaos!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" display-tooltip-when-elided="true" name="MainParagraph" style="width: auto; white-space: normal; height: auto; background-color: rgba(43, 173, 188, 0); font-size: 20px;" />
+                <ui:VisualElement name="PageIcon" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); background-image: url(&apos;project://database/Packages/com.unity.entities/Editor%20Default%20Resources/Unity.Entities.UI/icons/dark/Add.png?fileID=2800000&amp;guid=4d243d32f3ba9644e8eaade6d61d569d&amp;type=3#Add&apos;); -unity-background-scale-mode: scale-to-fit;" />
+            </ui:VisualElement>
+            <ui:VisualElement name="PageMovers" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); width: auto; flex-direction: row; height: auto; align-items: stretch;">
+                <ui:Button text="&lt;" display-tooltip-when-elided="true" name="PreviousPage" style="flex-direction: column; flex-wrap: nowrap; height: 10%;" />
+                <ui:IntegerField value="0" name="PageNum" style="height: 10%; text-overflow: clip; -unity-text-align: upper-center; -unity-text-outline-color: rgb(57, 127, 142); -unity-text-outline-width: 0; overflow: visible; flex-wrap: nowrap; align-items: stretch; align-self: auto; justify-content: flex-start; width: auto; white-space: nowrap; -unity-font-style: normal; font-size: 14px;" />
+                <ui:Button text="&gt;" display-tooltip-when-elided="true" name="NextPage" style="height: 10%;" />
+            </ui:VisualElement>
+            <ui:Button text="Back" display-tooltip-when-elided="true" name="AlmanacBack" />
+        </ui:VisualElement>
+        <ui:VisualElement name="Settings" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); align-items: center; justify-content: flex-start; align-self: auto; right: auto; bottom: auto; visibility: visible; display: none; -unity-text-outline-color: rgb(106, 19, 161); -unity-text-outline-width: 1px; font-size: 60%; color: rgb(44, 241, 51); flex-wrap: nowrap; flex-direction: column; white-space: normal; -unity-text-align: upper-left;">
+            <ui:Slider picking-mode="Ignore" label="Delay Until Hold Movement" value="0.25" high-value="2" focusable="true" show-input-field="true" name="HoldDelay" style="width: 80%; white-space: normal;" />
+            <ui:Slider picking-mode="Ignore" label="Delay Between Movement While Holding" value="0.1" high-value="2" focusable="true" show-input-field="true" name="DelayBetween" style="width: 80%;" />
+            <ui:Slider picking-mode="Ignore" label="Min Input Detected" value="1" high-value="1" focusable="true" show-input-field="true" name="MinInputDetected" style="width: 80%;" />
+            <ui:SliderInt picking-mode="Ignore" label="Render Distance" value="15" high-value="1000" show-input-field="true" name="RenderDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
+            <ui:EnumField label="Optimisation Strategy" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="OptimisationStrategy" />
+            <ui:SliderInt picking-mode="Ignore" label="Random Distance" value="15" high-value="100" show-input-field="true" name="RandomDistance" low-value="1" direction="Horizontal" style="width: 80%;" />
+            <ui:SliderInt picking-mode="Ignore" label="Randoms Per Frame" value="1" high-value="200" show-input-field="true" name="RandomsPerFrame" low-value="0" direction="Horizontal" style="width: 80%;" />
+            <ui:SliderInt picking-mode="Ignore" label="Blocks Per Frame" value="1" high-value="200" show-input-field="true" name="BlocksPerFrame" low-value="0" direction="Horizontal" style="width: 80%;" />
+            <ui:SliderInt picking-mode="Ignore" label="Max Blocks" value="5000" high-value="50000" show-input-field="true" name="MaxFrames" low-value="1" direction="Horizontal" style="width: 80%;" />
+            <ui:EnumField label="Debug Features" type="UnityEngine.TextAlignment, UnityEngine.TextRenderingModule" value="Center" name="DebugFeatures" />
+            <ui:Button text="Back" display-tooltip-when-elided="true" name="SettingsBack" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

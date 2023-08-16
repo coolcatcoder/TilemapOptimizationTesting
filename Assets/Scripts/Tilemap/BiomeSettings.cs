@@ -7,20 +7,33 @@ using UnityEditor;
 
 public class BiomeSettings : MonoBehaviour
 {
-    public bool ButtonTest;
+    public float2 DebugPos;
 
-    public Mesh RenderLocation;
-
-    public BiomeMonoNew[] Biomes;
+    public BiomeMono[] Biomes;
 }
 
 [System.Serializable]
-public struct BiomeMonoNew
+public struct BiomeMono
 {
     public string BiomeName; //discarded
 
-    public Color ReferenceColour;
+    public Color ReferenceColour; //discarded
 
+    public float2 Size;
+    public float2 Pos;
+
+    public byte StartingPlantIndex;
+    public int PlantLength;
+
+    public byte StartingBlockIndex;
+    public int BlockLength;
+
+    // add terrain generation scale and stuff later
+}
+
+[System.Serializable]
+public struct Biome
+{
     public float2 Size;
     public float2 Pos;
 
@@ -52,7 +65,22 @@ public class BiomeEditor : Editor
         {
             var BiomeInfo = t.Biomes[i];
 
-            Handles.color = BiomeInfo.ReferenceColour;
+            //PlayerPos += PlayerSize * -0.5f + 0.5f; // why the hell do these 2 lines exist???????
+            //BlockPos += BlockSize * -0.5f + 0.5f;
+
+            if ( // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection so good
+                t.DebugPos.x < BiomeInfo.Pos.x + BiomeInfo.Size.x &&
+                t.DebugPos.x + 0 > BiomeInfo.Pos.x &&
+                t.DebugPos.y < BiomeInfo.Pos.y + BiomeInfo.Size.y &&
+                t.DebugPos.y + 0 > BiomeInfo.Pos.y
+                )
+            {
+                Handles.color = Color.red;
+            }
+            else
+            {
+                Handles.color = BiomeInfo.ReferenceColour;
+            }
 
             Rect RectangleInfo = new(BiomeInfo.Pos, BiomeInfo.Size);
 
@@ -60,6 +88,10 @@ public class BiomeEditor : Editor
 
             Handles.Label(new float3(BiomeInfo.Pos + 0.5f, 0), math.lerp(0, 100, BiomeInfo.Pos.x/10).ToString());
         }
+
+        GUI.color = Color.magenta;
+
+        Handles.Label(new float3(t.DebugPos, 0), "o");
     }
 }
 
@@ -73,24 +105,19 @@ public class BiomeSettingsBaker : Baker<BiomeSettings>
             return;
         }
 
-        if (authoring.ButtonTest)
-        {
-            authoring.ButtonTest = false;
-            Debug.Log("pressed");
-        }
-
         var BiomesBuilder = new BlobBuilder(Allocator.Temp);
-        ref var BiomesArray = ref BiomesBuilder.ConstructRoot<BlobArray<TilemapSystem.Biome>>();
+        ref var BiomesArray = ref BiomesBuilder.ConstructRoot<BlobArray<Biome>>();
 
-        BlobBuilderArray<TilemapSystem.Biome> BiomesArrayBuilder = BiomesBuilder.Allocate(ref BiomesArray, authoring.Biomes.Length);
+        BlobBuilderArray<Biome> BiomesArrayBuilder = BiomesBuilder.Allocate(ref BiomesArray, authoring.Biomes.Length);
 
         for (int i = 0; i < authoring.Biomes.Length; i++)
         {
             var BiomeInfo = authoring.Biomes[i];
 
-            BiomesArrayBuilder[i] = new TilemapSystem.Biome()
+            BiomesArrayBuilder[i] = new Biome()
             {
-                //IdealConditions = BiomeInfo.IdealConditions,
+                Size = BiomeInfo.Size / 10, // divide 10 to put it in range of 0-1
+                Pos = BiomeInfo.Pos / 10,
                 StartingPlantIndex = BiomeInfo.StartingPlantIndex,
                 PlantLength = BiomeInfo.PlantLength,
                 StartingBlockIndex = BiomeInfo.StartingBlockIndex,
@@ -102,7 +129,7 @@ public class BiomeSettingsBaker : Baker<BiomeSettings>
 
         AddComponent(entity, new BiomeSettingsData
         {
-            Biomes = BiomesBuilder.CreateBlobAssetReference<BlobArray<TilemapSystem.Biome>>(Allocator.Persistent)
+            Biomes = BiomesBuilder.CreateBlobAssetReference<BlobArray<Biome>>(Allocator.Persistent)
         });
 
         BiomesBuilder.Dispose();
@@ -111,5 +138,5 @@ public class BiomeSettingsBaker : Baker<BiomeSettings>
 
 public struct BiomeSettingsData : IComponentData
 {
-    public BlobAssetReference<BlobArray<TilemapSystem.Biome>> Biomes;
+    public BlobAssetReference<BlobArray<Biome>> Biomes;
 }
