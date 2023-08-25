@@ -159,14 +159,14 @@ MonoBehaviour:
   Pos:
     x: 5000
     y: 5000
-  ChunkWidth: 200
+  ChunkWidth: 128
   BiomeScale:
     x: 0.01
     y: 0.01
-  TerrainNoiseScale: 0.05
+  TerrainNoiseScale: 0.09
   AdditionToTerrainNoise: 0.696
   PostTerrainNoiseScale: 10
-  DebugChunk0: 1
+  DebugChunk0: 0
   DebugBiomeDraw: 0
   SpriteGridWidth: 42
   SpriteGridHeight: 1
@@ -384,7 +384,7 @@ MonoBehaviour:
       Speed: 0
       SprintSpeed: 0
       WalkSpeed: 0
-    MinNoise: -0.9
+    MinNoise: -0.1
     MaxNoise: 0.2
     PercentChance: 0
   - BlockName: velvet slicer low damage
@@ -740,14 +740,26 @@ MonoBehaviour:
     x: -1.77
     y: -1.44
   Biomes:
+  - BiomeName: Nothing
+    ReferenceColour: {r: 0, g: 0, b: 0, a: 1}
+    Size:
+      x: 0
+      y: 0
+    Pos:
+      x: -10
+      y: -10
+    StartingPlantIndex: 0
+    PlantLength: 1
+    StartingBlockIndex: 0
+    BlockLength: 0
   - BiomeName: Swishy Bad
     ReferenceColour: {r: 0.85882354, g: 0.19215685, b: 0.513965, a: 1}
     Size:
-      x: 1
-      y: 1
+      x: 2
+      y: 5
     Pos:
       x: 0
-      y: 0
+      y: 5
     StartingPlantIndex: 1
     PlantLength: 3
     StartingBlockIndex: 0
@@ -755,11 +767,11 @@ MonoBehaviour:
   - BiomeName: Swishy Good
     ReferenceColour: {r: 0.627183, g: 0.19215685, b: 0.85882354, a: 1}
     Size:
-      x: 1
-      y: 2
+      x: 4
+      y: 2.35
     Pos:
-      x: 1
-      y: 0
+      x: 2
+      y: 5
     StartingPlantIndex: 4
     PlantLength: 3
     StartingBlockIndex: 0
@@ -767,11 +779,11 @@ MonoBehaviour:
   - BiomeName: velvet thorns
     ReferenceColour: {r: 1, g: 0.14725646, b: 0, a: 1}
     Size:
-      x: 1
-      y: 1
+      x: 6
+      y: 2
     Pos:
       x: 0
-      y: 1
+      y: 3
     StartingPlantIndex: 9
     PlantLength: 3
     StartingBlockIndex: 7
@@ -779,22 +791,22 @@ MonoBehaviour:
   - BiomeName: health forest
     ReferenceColour: {r: 0, g: 1, b: 0.4357667, a: 1}
     Size:
-      x: 1
-      y: 1
+      x: 6
+      y: 3
     Pos:
       x: 0
-      y: 2
+      y: 0
     StartingPlantIndex: 12
     PlantLength: 3
     StartingBlockIndex: 7
     BlockLength: 2
-  - BiomeName: health forest
-    ReferenceColour: {r: 0, g: 1, b: 0.4357667, a: 1}
+  - BiomeName: Mixed Jungle
+    ReferenceColour: {r: 1, g: 0, b: 0.99202347, a: 1}
     Size:
-      x: 2
-      y: 2
+      x: 4
+      y: 3.28
     Pos:
-      x: 2
+      x: 6
       y: 0
     StartingPlantIndex: 15
     PlantLength: 2

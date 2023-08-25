@@ -8,13 +8,14 @@ using Random = Unity.Mathematics.Random;
 using Unity.Rendering;
 using UnityEngine.Rendering;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Profiling;
 
 [BurstCompile]
 [UpdateAfter(typeof(PlayerSystem))]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct TilemapSystem : ISystem, ISystemStartStop
 {
-    NativeArray<byte> TilemapArray; // should never need more than 200 block types, at least I hope so
+    Chunked2DArray<byte> TilemapArray; // should never need more than 200 block types, at least I hope so
     NativeArray<bool> ChunksGenerated;
 
     NativeArray<VertexAttributeDescriptor> VertexAttributes;
@@ -22,12 +23,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     BlobAssetReference<BlobArray<BlockType>> BlockTypes;
 
     BlobAssetReference<BlobArray<Biome>> Biomes;
-
-    int ChunkWidth;
-    int ChunkWidthSquared;
-
-    int BlockGridWidth;
-    int ChunkGridWidth;
 
     uint Seed;
 
@@ -42,7 +37,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     float SpriteWidth;
     float SpriteHeight;
 
-    Random SafePosRandom;
+    Random GeneralRandom;
 
     bool DebugChunk0;
 
@@ -59,73 +54,29 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     public void OnStartRunning(ref SystemState state)
     {
         ref var TilemapSettingsInfo = ref SystemAPI.GetSingletonRW<TilemapSettingsData>().ValueRW;
-        ref var BiomeSettingsInfo = ref SystemAPI.GetSingletonRW<BiomeSettingsData>().ValueRW;
-
-        //float LowestValue = 100f;
-        //float HighestValue = -100f;
-
-        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
-        //{
-        //    float NoiseValue = noise.snoise(TilemapSettingsInfo.TerrainNoiseScale * (float2)Random.CreateFromIndex((uint)i).NextInt2(0, int.MaxValue));
-
-        //    if (NoiseValue > HighestValue)
-        //    {
-        //        HighestValue = NoiseValue;
-        //    }
-
-        //    if (NoiseValue < LowestValue)
-        //    {
-        //        LowestValue = NoiseValue;
-        //    }
-        //}
-
-        //Debug.Log(HighestValue);
-        //Debug.Log(LowestValue);
-
-        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
-        //{
-        //    float NoiseValue = noise.snoise(TilemapSettingsInfo.TerrainNoiseScale * (float2)Random.CreateFromIndex((uint)i).NextInt2(0, int.MaxValue));
-
-        //    Debug.Log((int)math.round((NoiseValue + 0.696) * 2 + 1));
-        //}
-
-        BiomeScale = TilemapSettingsInfo.BiomeScale;
-
-        TerrainNoiseScale = TilemapSettingsInfo.TerrainNoiseScale;
-        PostTerrainNoiseScale = TilemapSettingsInfo.PostTerrainNoiseScale;
-        AdditionToTerrainNoise = TilemapSettingsInfo.AdditionToTerrainNoise;
-
-        DebugChunk0 = TilemapSettingsInfo.DebugChunk0;
-
-        BlockTypes = TilemapSettingsInfo.BlockTypes;
-        Biomes = BiomeSettingsInfo.Biomes;
-
-        ChunkWidth = TilemapSettingsInfo.ChunkWidth;
-        ChunkWidthSquared = ChunkWidth * ChunkWidth;
-
-        BlockGridWidth = TilemapSettingsInfo.TilemapSize; // why is it called tilemap size???? ughhhhh
 
         Seed = (uint)SystemAPI.Time.ElapsedTime; // so sketchy
-        SafePosRandom = Random.CreateFromIndex(Seed);
+        GeneralRandom = Random.CreateFromIndex(Seed);
 
-        BiomeSeed = SafePosRandom.NextFloat2(-5000, 5000); // SUPER SKETCHY
+        BiomeSeed = GeneralRandom.NextFloat2(-5000, 5000);
 
-        SpriteWidth = TilemapSettingsInfo.SpriteWidth;
-        SpriteHeight = TilemapSettingsInfo.SpriteHeight;
+        TilemapArray = new Chunked2DArray<byte>(TilemapSettingsInfo.TilemapSize, TilemapSettingsInfo.ChunkWidth, Allocator.Persistent);
 
-        ChunkGridWidth = TilemapSettingsInfo.TilemapSize / TilemapSettingsInfo.ChunkWidth;
-
-        TilemapArray = new NativeArray<byte>(TilemapSettingsInfo.TilemapSize * TilemapSettingsInfo.TilemapSize, Allocator.Persistent);
-        ChunksGenerated = new NativeArray<bool>(ChunkGridWidth * ChunkGridWidth, Allocator.Persistent);
+        ChunksGenerated = new NativeArray<bool>(TilemapArray.ChunkGridWidthSquared, Allocator.Persistent);
 
         VertexAttributes = new NativeArray<VertexAttributeDescriptor>(2, Allocator.Persistent);
         VertexAttributes[0] = new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3);
         VertexAttributes[1] = new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2);
 
+        ResetTilemapSettings(ref state);
+
         ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
-        PlayerStats.Pos = FindSafePos();
-        PlayerStats.ForceUpdate = true;
+        if (!DebugChunk0)
+        {
+            PlayerStats.Pos = FindSafePos();
+            PlayerStats.ForceUpdate = true;
+        }
     }
 
     public void OnUpdate(ref SystemState state)
@@ -146,10 +97,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         int ScreenWidth = TopRightPos.x - BottomLeftPos.x;
         int ScreenHeight = TopRightPos.y - BottomLeftPos.y;
 
-        int RenderAmount = ScreenWidth * ScreenHeight;
+        int BlocksOnScreen = ScreenWidth * ScreenHeight;
 
-        MeshData.SetVertexBufferParams(RenderAmount * 4 + 4, VertexAttributes); //4 vertices per block, plus 4 more for player
-        MeshData.SetIndexBufferParams(RenderAmount * 6 + 6, IndexFormat.UInt32);
+        MeshData.SetVertexBufferParams(BlocksOnScreen * 4 + 4, VertexAttributes); //4 vertices per block, plus 4 more for player
+        MeshData.SetIndexBufferParams(BlocksOnScreen * 6 + 6, IndexFormat.UInt32);
 
         MeshData.subMeshCount = 1; // temporary, needs to be replaced by something good that works out how many use what material, but that is pain
 
@@ -162,7 +113,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             UnsafeUtility.MemClear(Indices.GetUnsafePtr(), Indices.Length * sizeof(uint));
         }
 
-        BurstUpdate(ref state, Vertices, Indices, RenderAmount);
+        SimpleMesh<Vertex,uint> mesh = new SimpleMesh<Vertex, uint>(Allocator.Persistent)
+
+        BurstUpdate(ref state, mesh, BlocksOnScreen);
 
         var TilemapToMeshJob = new TilemapToMesh()
         {
@@ -173,10 +126,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             SpriteWidth = SpriteWidth,
             SpriteHeight = SpriteHeight,
             ScreenWidth = ScreenWidth,
-            BlockGridWidth = BlockGridWidth,
-            ChunkWidth = ChunkWidth,
-            ChunkWidthSquared = ChunkWidthSquared,
-            ChunkGridWidth = ChunkGridWidth,
             BottomLeftOfScreen = BottomLeftPos
         };
 
@@ -214,32 +163,28 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             Center = SubMeshInfo.bounds.center,
             Extents = SubMeshInfo.bounds.extents
         };
+
+        mesh.Dispose();
     }
 
     [BurstCompile]
-    public void BurstUpdate(ref SystemState state, NativeArray<Vertex> Vertices, NativeArray<uint> Indices, int RenderAmount)
+    public void BurstUpdate(ref SystemState state, SimpleMesh<Vertex,uint> mesh, int BlocksOnScreen)
     {
-        //if (DebugChunk0)
-        //{
-        //    ref var TilemapSettingsInfo = ref SystemAPI.GetSingletonRW<TilemapSettingsData>().ValueRW;
+        if (DebugChunk0)
+        {
+            ResetTilemapSettings(ref state);
 
-        //    TerrainNoiseScale = TilemapSettingsInfo.TerrainNoiseScale;
-        //    PostTerrainNoiseScale = TilemapSettingsInfo.PostTerrainNoiseScale;
-        //    AdditionToTerrainNoise = TilemapSettingsInfo.AdditionToTerrainNoise;
+            ChunksGenerated[0] = false;
 
-        //    DebugChunk0 = TilemapSettingsInfo.DebugChunk0;
-
-        //    BlockTypes = TilemapSettingsInfo.BlockTypes;
-
-        //    GenerateChunkOld(0).Complete();
-        //}
+            GenerateChunk(0).Complete();
+        }
 
         ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
-        int2 PlayerChunkPos = ChunkPosFromBlockPos((int2)PlayerStats.Pos, ChunkWidth);
-        int PlayerChunkIndex = IndexFromPos(PlayerChunkPos, ChunkGridWidth);
+        int2 PlayerChunkPos = TilemapArray.ChunkPosFromFullPos((int2)PlayerStats.Pos);
+        int PlayerChunkIndex = StorageMethods.IndexFromPos(PlayerChunkPos, TilemapArray.ChunkGridWidth);
 
-        if (PlayerStats.HasMoved)
+        if (PlayerStats.HasMoved && !DebugChunk0)
         {
             PlayerStats.HasMoved = false;
 
@@ -284,37 +229,85 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     // ChunkPos and ChunkIndex are valid for the ChunkGrid
     // BlockPos (aka WorldPos) and BlockIndex are valid for the BlockGrid.... but I'm lying as BlockIndex is usually never valid for the BlockGrid. Good luck!
 
-    public static int IndexFromPos(int2 Pos, int GridWidth) // dangerous
-    {
-        return Pos.y * GridWidth + Pos.x;
-    }
+    //public static int IndexFromPos(int2 Pos, int GridWidth) // dangerous
+    //{
+    //    return Pos.y * GridWidth + Pos.x;
+    //}
 
-    public static int2 PosFromIndex(int Index, int GridWidth) // dangerous
-    {
-        return new int2(Index % GridWidth, Index / GridWidth);
-    }
+    //public static int2 PosFromIndex(int Index, int GridWidth) // dangerous
+    //{
+    //    return new int2(Index % GridWidth, Index / GridWidth);
+    //}
 
-    // probably should inline this?
-    public static int2 ChunkPosFromBlockPos(int2 BlockPos, int ChunkWidth)
-    {
-        return BlockPos / ChunkWidth;
-    }
+    //// probably should inline this?
+    //public static int2 ChunkPosFromBlockPos(int2 BlockPos, int ChunkWidth)
+    //{
+    //    return BlockPos / ChunkWidth;
+    //}
 
-    public static int2 BlockPosFromChunkPos(int2 ChunkPos, int ChunkWidth)
-    {
-        return ChunkPos * ChunkWidth;
-    }
+    //public static int2 BlockPosFromChunkPos(int2 ChunkPos, int ChunkWidth)
+    //{
+    //    return ChunkPos * ChunkWidth;
+    //}
 
-    // add function to get chunk index from block index
+    //// add function to get chunk index from block index
 
-    public static int BlockIndexFromChunkIndex(int ChunkIndex, int ChunkWidthSquared)
-    {
-        return ChunkIndex * ChunkWidthSquared;
-    }
+    //public static int BlockIndexFromChunkIndex(int ChunkIndex, int ChunkWidthSquared)
+    //{
+    //    return ChunkIndex * ChunkWidthSquared;
+    //}
 
     public static unsafe ref T UnsafeElementAt<T>(NativeArray<T> array, int index) where T : struct
     {
         return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
+    }
+
+    public void ResetTilemapSettings(ref SystemState state)
+    {
+        ref var TilemapSettingsInfo = ref SystemAPI.GetSingletonRW<TilemapSettingsData>().ValueRW;
+        ref var BiomeSettingsInfo = ref SystemAPI.GetSingletonRW<BiomeSettingsData>().ValueRW;
+
+        //float LowestValue = 100f;
+        //float HighestValue = -100f;
+
+        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
+        //{
+        //    float NoiseValue = noise.snoise(TilemapSettingsInfo.TerrainNoiseScale * (float2)Random.CreateFromIndex((uint)i).NextInt2(0, int.MaxValue));
+
+        //    if (NoiseValue > HighestValue)
+        //    {
+        //        HighestValue = NoiseValue;
+        //    }
+
+        //    if (NoiseValue < LowestValue)
+        //    {
+        //        LowestValue = NoiseValue;
+        //    }
+        //}
+
+        //Debug.Log(HighestValue);
+        //Debug.Log(LowestValue);
+
+        //for (int i = 0; i < TilemapSettingsInfo.Trials; i++)
+        //{
+        //    float NoiseValue = noise.snoise(TilemapSettingsInfo.TerrainNoiseScale * (float2)Random.CreateFromIndex((uint)i).NextInt2(0, int.MaxValue));
+
+        //    Debug.Log((int)math.round((NoiseValue + 0.696) * 2 + 1));
+        //}
+
+        BiomeScale = TilemapSettingsInfo.BiomeScale;
+
+        TerrainNoiseScale = TilemapSettingsInfo.TerrainNoiseScale;
+        PostTerrainNoiseScale = TilemapSettingsInfo.PostTerrainNoiseScale;
+        AdditionToTerrainNoise = TilemapSettingsInfo.AdditionToTerrainNoise;
+
+        DebugChunk0 = TilemapSettingsInfo.DebugChunk0;
+
+        BlockTypes = TilemapSettingsInfo.BlockTypes;
+        Biomes = BiomeSettingsInfo.Biomes;
+
+        SpriteWidth = TilemapSettingsInfo.SpriteWidth;
+        SpriteHeight = TilemapSettingsInfo.SpriteHeight;
     }
 
     #endregion
@@ -331,20 +324,20 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             }
         }
 
-        Debug.Log("biome not found");
+        //Debug.Log("biome not found"); // leave commented if using burst! Please!
         return 0; // fail safe biome
     }
 
     [BurstCompile]
     public void GenerateChunksAroundPlayer(int2 PlayerPos)
     {
-        int2 PlayerChunkPos = ChunkPosFromBlockPos(PlayerPos, ChunkWidth);
+        int2 PlayerChunkPos = TilemapArray.ChunkPosFromFullPos(PlayerPos);
 
         for (int i = 0; i < 9; i++)
         {
-            int2 OffsetPos = PosFromIndex(i, 3) - 1;
+            int2 OffsetPos = StorageMethods.PosFromIndex(i, 3) - 1;
 
-            int UnsafeChunkIndex = IndexFromPos(OffsetPos + PlayerChunkPos, ChunkGridWidth);
+            int UnsafeChunkIndex = StorageMethods.IndexFromPos(OffsetPos + PlayerChunkPos, TilemapArray.ChunkGridWidth);
 
             if (UnsafeChunkIndex <= 0 || UnsafeChunkIndex > ChunksGenerated.Length)
             {
@@ -353,36 +346,32 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             if (!ChunksGenerated[UnsafeChunkIndex])
             {
-                GenerateChunk(math.clamp(PlayerChunkPos + OffsetPos, 0, ChunkGridWidth)).Complete();
+                GenerateChunk(math.clamp(PlayerChunkPos + OffsetPos, 0, TilemapArray.ChunkGridWidth)).Complete();
             }
         }
     }
 
     public int2 FindSafePos()
     {
-        int2 ChunkPos = SafePosRandom.NextInt2(ChunkGridWidth);
-
-        int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+        int2 ChunkPos = GeneralRandom.NextInt2(TilemapArray.ChunkGridWidth);
 
         GenerateChunk(ChunkPos).Complete();
 
-        int BlockIndexStart = BlockIndexFromChunkIndex(ChunkIndex, ChunkWidthSquared);
-        int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
+        bool Safe = false;
+        int2 BlockPosStart = TilemapArray.FullPosFromChunkPos(ChunkPos);
+        int2 BlockPos = BlockPosStart;
 
-        for (int BI = 0; BI < ChunkWidthSquared; BI++)
+        while (!Safe)
         {
-            int2 WorldPos = WorldPosStart + PosFromIndex(BI, ChunkWidth); // important lesson here, the chunk is our grid, so we use chunk width instead of chunk grid width
-            int BlockIndex = BlockIndexStart + BI;
+            BlockPos = BlockPosStart + GeneralRandom.NextInt2(TilemapArray.ChunkWidth)-1; // -1 to avoid an edgecase where it could pick a pos in the wrong chunk
 
-            byte TypeIndex = TilemapArray[BlockIndex];
-
-            if (TypeIndex == 0) // make better soon
+            if (TilemapArray.FullArray[TilemapArray.FullIndexFromFullPos(BlockPos)] == 0)
             {
-                return WorldPos;
+                Safe = true;
             }
         }
 
-        return WorldPosStart; // fail deadly
+        return BlockPos;
     }
 
     public static byte GenerateBlock(int2 Pos, uint Seed, float2 BiomeSeed, float2 BiomeScale, float Scale, BlobAssetReference<BlobArray<Biome>> Biomes, BlobAssetReference<BlobArray<BlockType>> BlockTypes, int TrueIndex) // extremely bad, don't like
@@ -431,11 +420,11 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     public JobHandle GenerateChunk(int2 ChunkPos, JobHandle Dependency = new()) // do we want to burst compile this?
     {
-        int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+        int ChunkIndex = StorageMethods.IndexFromPos(ChunkPos, TilemapArray.ChunkGridWidth);
 
-        int2 BlockPos = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
+        int2 BlockPos = TilemapArray.FullPosFromChunkPos(ChunkPos);
 
-        int BlockIndex = BlockIndexFromChunkIndex(ChunkIndex, ChunkWidthSquared);
+        int BlockIndex = TilemapArray.FullIndexFromChunkIndex(ChunkIndex);
 
         ChunksGenerated[ChunkIndex] = true;
 
@@ -443,8 +432,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         {
             Tilemap = TilemapArray,
             StartingIndex = BlockIndex,
-            GridWidth = BlockGridWidth,
-            ChunkWidth = ChunkWidth,
             ChunkWorldPos = BlockPos,
             Seed = Seed,
             BiomeSeed = BiomeSeed,
@@ -452,25 +439,20 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             TerrainNoiseScale = TerrainNoiseScale,
             AdditionToNoise = AdditionToTerrainNoise,
             PostScale = PostTerrainNoiseScale,
-            AmountOfBlockTypes = (byte)BlockTypes.Value.Length,
             Biomes = Biomes,
             BlockTypes = BlockTypes
         };
 
-        return ChunkGeneratorJob.ScheduleParallel(ChunkWidthSquared, 64, Dependency);
+        return ChunkGeneratorJob.ScheduleParallel(TilemapArray.ChunkWidthSquared, 64, Dependency);
     }
 
     [BurstCompile]
     public struct ChunkGenerator : IJobFor
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<byte> Tilemap;
+        public Chunked2DArray<byte> Tilemap;
 
         public int StartingIndex;
-
-        public int GridWidth;
-
-        public int ChunkWidth;
 
         public int2 ChunkWorldPos;
 
@@ -486,8 +468,6 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         public float PostScale;
 
-        public byte AmountOfBlockTypes;
-
         [ReadOnly]
         public BlobAssetReference<BlobArray<Biome>> Biomes;
 
@@ -496,10 +476,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         public void Execute(int i)
         {
-            int2 BlockLocalPos = PosFromIndex(i, ChunkWidth);
+            int2 BlockLocalPos = StorageMethods.PosFromIndex(i, Tilemap.ChunkWidth);
             int TrueIndex = StartingIndex + i;
 
-            if (TrueIndex > Tilemap.Length || TrueIndex < 0)
+            if (TrueIndex > Tilemap.FullArray.Length || TrueIndex < 0)
             {
                 Debug.Log("Outside of map, what the hell???");
                 return;
@@ -509,7 +489,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
             byte BlockTypeIndex = GenerateBlock(BlockWorldPos, Seed, BiomeSeed, BiomeScale, TerrainNoiseScale, Biomes, BlockTypes, TrueIndex);
 
-            Tilemap[TrueIndex] = BlockTypeIndex;
+            Tilemap.FullArray[TrueIndex] = BlockTypeIndex;
         }
     }
 
@@ -545,17 +525,11 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         Indices[IndexStart + 5] = UVertexStart + 2;
     }
 
-    public struct Vertex // this has to match the VertexAttributes
-    {
-        public float3 Pos;
-        public float2 UV; // is this precise enough?
-    }
-
     [BurstCompile]
     struct TilemapToMesh : IJobFor
     {
         [ReadOnly]
-        public NativeArray<byte> TilemapArray;
+        public Chunked2DArray<byte> TilemapArray;
 
         [ReadOnly]
         public BlobAssetReference<BlobArray<BlockType>> BlockTypes;
@@ -578,44 +552,32 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         public int ScreenWidth;
 
         [ReadOnly]
-        public int BlockGridWidth;
-
-        [ReadOnly]
-        public int ChunkWidth;
-
-        [ReadOnly]
-        public int ChunkWidthSquared;
-
-        [ReadOnly]
-        public int ChunkGridWidth;
-
-        [ReadOnly]
         public int2 BottomLeftOfScreen;
 
         public void Execute(int i)
         {
-            int2 iWorldPos = PosFromIndex(i, ScreenWidth);
+            int2 iWorldPos = StorageMethods.PosFromIndex(i, ScreenWidth);
 
             int2 TrueWorldPos = iWorldPos + BottomLeftOfScreen;
 
-            if ((TrueWorldPos.x < 0 || TrueWorldPos.y < 0) || (TrueWorldPos.x > BlockGridWidth || TrueWorldPos.y > BlockGridWidth))
+            if ((TrueWorldPos.x < 0 || TrueWorldPos.y < 0) || (TrueWorldPos.x > TilemapArray.FullGridWidth || TrueWorldPos.y > TilemapArray.FullGridWidth))
             {
                 return;
             }
 
-            int2 ChunkPos = ChunkPosFromBlockPos(TrueWorldPos, ChunkWidth);
-            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
-            int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
+            int2 ChunkPos = TilemapArray.ChunkPosFromFullPos(TrueWorldPos);
+            int ChunkIndex = StorageMethods.IndexFromPos(ChunkPos, TilemapArray.ChunkGridWidth);
+            int BlockIndexStart = ChunkIndex * TilemapArray.ChunkWidthSquared;
 
-            int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
+            int2 WorldPosStart = TilemapArray.FullPosFromChunkPos(ChunkPos);
 
             int2 LocalPos = TrueWorldPos - WorldPosStart;
 
-            int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
+            int LocalIndex = StorageMethods.IndexFromPos(LocalPos, TilemapArray.ChunkWidth);
 
             int BlockIndex = BlockIndexStart + LocalIndex;
 
-            byte BlockTypeIndex = TilemapArray[BlockIndex];
+            byte BlockTypeIndex = TilemapArray.FullArray[BlockIndex];
 
             if (BlockTypeIndex == 0)
             {
@@ -665,25 +627,25 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         for (int i = 0; i < 9; i++)
         {
-            int2 OffsetPos = PosFromIndex(i, 3) - 1;
+            int2 OffsetPos = StorageMethods.PosFromIndex(i, 3) - 1;
 
             int2 BlockPos = ClosestBlockPos + OffsetPos;
 
             BlockPos = math.clamp(BlockPos, 0, int.MaxValue);
 
-            int2 ChunkPos = ChunkPosFromBlockPos(BlockPos, ChunkWidth);
-            int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
-            int BlockIndexStart = ChunkIndex * ChunkWidthSquared;
+            int2 ChunkPos = TilemapArray.ChunkPosFromFullPos(BlockPos);
+            int ChunkIndex = StorageMethods.IndexFromPos(ChunkPos, TilemapArray.ChunkGridWidth);
+            int BlockIndexStart = ChunkIndex * TilemapArray.ChunkWidthSquared;
 
-            int2 WorldPosStart = BlockPosFromChunkPos(ChunkPos, ChunkWidth);
+            int2 WorldPosStart = TilemapArray.FullPosFromChunkPos(ChunkPos);
 
             int2 LocalPos = BlockPos - WorldPosStart;
 
-            int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
+            int LocalIndex = StorageMethods.IndexFromPos(LocalPos, TilemapArray.ChunkWidth);
 
             int BlockIndex = BlockIndexStart + LocalIndex;
 
-            byte BlockTypeIndex = TilemapArray[BlockIndex];
+            byte BlockTypeIndex = TilemapArray.FullArray[BlockIndex];
 
             if (BlockTypeIndex == 0) // you can't collide with nothing
             {
@@ -698,7 +660,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
                 {
                     if (BlockInfo.Behaviour.HasFlag(CollisionBehaviour.Consume))
                     {
-                        TilemapArray[BlockIndex] = 0;
+                        TilemapArray.FullArray[BlockIndex] = 0;
                     }
 
                     PlayerStats += BlockInfo.StatsChange;

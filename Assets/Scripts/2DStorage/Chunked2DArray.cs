@@ -5,20 +5,20 @@ using Unity.Mathematics;
 
 public struct Chunked2DArray<T> : IDisposable where T : unmanaged
 {
-    NativeArray<T> FullArray;
-    NativeArray<bool> ChunkArray; // not sure
+    public NativeArray<T> FullArray;
 
-    readonly int ChunkWidth;
-    readonly int ChunkWidthLog2;
-    readonly int ChunkWidthSquared;
-    readonly int ChunkGridWidth;
+    public readonly int ChunkWidth;
+    public readonly int ChunkWidthLog2;
+    public readonly int ChunkWidthSquared;
+    public readonly int ChunkGridWidth;
+    public readonly int ChunkGridWidthSquared;
 
-    readonly int FullWidth;
-    readonly int FullWidthSquared; // aka length of FullArray
+    public readonly int FullGridWidth;
+    public readonly int FullGridWidthSquared; // aka length of FullArray
 
     // implement square root fast stuff asap
 
-    public Chunked2DArray(int FullWidth, int ChunkWidth, Allocator allocator)
+    public Chunked2DArray(int FullGridWidth, int ChunkWidth, Allocator allocator)
     {
         int IsPowerOf2 = ChunkWidth & (ChunkWidth - 1);
 
@@ -27,15 +27,15 @@ public struct Chunked2DArray<T> : IDisposable where T : unmanaged
             throw new ArgumentException("ChunkWidth is not a power of 2!");
         }
 
-        this.FullWidth = FullWidth;
-        FullWidthSquared = FullWidth * FullWidth;
-        FullArray = new NativeArray<T>(FullWidthSquared, allocator);
+        this.FullGridWidth = FullGridWidth;
+        FullGridWidthSquared = FullGridWidth * FullGridWidth;
+        FullArray = new NativeArray<T>(FullGridWidthSquared, allocator);
 
         this.ChunkWidth = ChunkWidth;
         ChunkWidthLog2 = (int)math.log2(ChunkWidth); // fast apparently?
         ChunkWidthSquared = ChunkWidth * ChunkWidth;
-        ChunkGridWidth = FullWidth / ChunkWidth;
-        ChunkArray = new NativeArray<bool>(ChunkWidthSquared, allocator);
+        ChunkGridWidth = FullGridWidth / ChunkWidth;
+        ChunkGridWidthSquared = ChunkGridWidth * ChunkGridWidth;
     }
 
     public T Get(int2 Pos)
@@ -56,31 +56,35 @@ public struct Chunked2DArray<T> : IDisposable where T : unmanaged
     public int FullIndexFromFullPos(int2 FullPos)
     {
         int2 ChunkPos = FullPos >> ChunkWidthLog2;
-        int ChunkIndex = IndexFromPos(ChunkPos, ChunkGridWidth);
+        int ChunkIndex = StorageMethods.IndexFromPos(ChunkPos, ChunkGridWidth);
         int FullIndexStart = ChunkIndex * ChunkWidthSquared;
 
         int2 LocalPos = FullPos % ChunkWidth;
 
-        int LocalIndex = IndexFromPos(LocalPos, ChunkWidth);
+        int LocalIndex = StorageMethods.IndexFromPos(LocalPos, ChunkWidth);
 
         int BlockIndex = FullIndexStart + LocalIndex;
 
         return BlockIndex;
     }
 
-    internal static int IndexFromPos(int2 Pos, int GridWidth) // dangerous
+    public int FullIndexFromChunkIndex(int ChunkIndex)
     {
-        return Pos.y * GridWidth + Pos.x;
+        return ChunkIndex * ChunkWidthSquared;
     }
 
-    internal static int2 PosFromIndex(int Index, int GridWidth) // dangerous
+    public int2 FullPosFromChunkPos(int2 ChunkPos)
     {
-        return new int2(Index % GridWidth, Index / GridWidth);
+        return ChunkPos * ChunkWidth;
+    }
+
+    public int2 ChunkPosFromFullPos(int2 ChunkPos)
+    {
+        return ChunkPos / ChunkWidth;
     }
 
     public void Dispose()
     {
         FullArray.Dispose();
-        ChunkArray.Dispose();
     }
 }
