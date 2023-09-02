@@ -120,7 +120,7 @@ public struct MarchingSquares // todo: stop saddle points from being pain and su
             AmountOfIndices += (uint)IndexTable[SquareIndices[i]].Length;
         }
 
-        SimpleMesh<Vertex, uint> Mesh = new SimpleMesh<Vertex, uint>(Allocator.Persistent, AmountOfVertices, Allocator.Persistent, AmountOfIndices);
+        SimpleMesh<Vertex, uint> Mesh = new SimpleMesh<Vertex, uint>(AmountOfVertices, AmountOfIndices, Allocator.Persistent);
 
         int VertIndex = 0;
         uint IndexIndex = 0; // The worst name of any variable ever!

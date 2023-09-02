@@ -123,6 +123,136 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &88799166
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 88799168}
+  - component: {fileID: 88799167}
+  m_Layer: 0
+  m_Name: pain and suffering
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &88799167
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88799166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4613e00970609c8408c5f47706dcb85a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Bake: 1
+  DebugPos:
+    x: 0
+    y: 0
+  Biomes:
+  - Size:
+      x: 1
+      y: 2
+    Pos:
+      x: 0
+      y: 0
+    RandomPatternStartingIndex: 0
+    RandomPatternLength: 1
+    SimplexPatternStartingIndex: 0
+    SimplexPatternLength: 0
+    SimplexSmoothedPatternStartingIndex: 0
+    SimplexSmoothedPatternLength: 0
+    SimplexScalesStartingIndex: 0
+    SimplexScalesLength: 0
+  - Size:
+      x: 1
+      y: 2
+    Pos:
+      x: 0
+      y: 0
+    RandomPatternStartingIndex: 1
+    RandomPatternLength: 1
+    SimplexPatternStartingIndex: 0
+    SimplexPatternLength: 0
+    SimplexSmoothedPatternStartingIndex: 0
+    SimplexSmoothedPatternLength: 0
+    SimplexScalesStartingIndex: 0
+    SimplexScalesLength: 0
+  RandomPatternMapObjects:
+  - Data:
+      UV:
+        x: 0
+        y: 0
+      Depth: 2
+      Pattern: 1
+      Behaviour: 1
+      StrengthToCross: 1
+      Stats:
+        RenderSize:
+          x: 0
+          y: 0
+        CollisionSize:
+          x: 0
+          y: 0
+        Health: 0
+        Stamina: 0
+        Strength: 0
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 0.8
+      y: 0.8
+    Chance: 0.5
+  - Data:
+      UV:
+        x: 0
+        y: 0
+      Depth: 2
+      Pattern: 1
+      Behaviour: 1
+      StrengthToCross: 1
+      Stats:
+        RenderSize:
+          x: 0
+          y: 0
+        CollisionSize:
+          x: 0
+          y: 0
+        Health: 0
+        Stamina: 0
+        Strength: 0
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 0.8
+      y: 0.8
+    Chance: 0.5
+  SimplexPatternMapObjects: []
+  SimplexSmoothedPatternMapObjects: []
+--- !u!4 &88799168
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88799166}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1194106974
 GameObject:
   m_ObjectHideFlags: 0
@@ -834,3 +964,4 @@ SceneRoots:
   - {fileID: 1194106976}
   - {fileID: 1496029463}
   - {fileID: 1998787022}
+  - {fileID: 88799168}

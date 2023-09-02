@@ -1,6 +1,8 @@
 using Unity.Mathematics;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
-public struct StorageMethods
+public static partial class StorageMethods
 {
     public static int IndexFromPos(int2 Pos, int GridWidth) // dangerous
     {
@@ -10,5 +12,10 @@ public struct StorageMethods
     public static int2 PosFromIndex(int Index, int GridWidth) // dangerous
     {
         return new int2(Index % GridWidth, Index / GridWidth);
+    }
+
+    public static unsafe ref T RefElementAt<T>(this NativeArray<T> array, int index) where T : struct
+    {
+        return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
     }
 }

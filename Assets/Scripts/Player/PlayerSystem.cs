@@ -12,7 +12,7 @@ public partial struct PlayerSystem : ISystem//, ISystemStartStop
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<InputData>();
-        state.RequireForUpdate<Stats>();
+        //state.RequireForUpdate<Stats>();
     }
 
     //public void OnStartRunning(ref SystemState state)
@@ -23,48 +23,48 @@ public partial struct PlayerSystem : ISystem//, ISystemStartStop
 
     public void OnUpdate(ref SystemState state)
     {
-        ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
-        ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
+        //ref InputData InputInfo = ref SystemAPI.GetSingletonRW<InputData>().ValueRW;
+        //ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
-        if (PlayerStats.ForceUpdate)
-        {
-            PlayerStats.ForceUpdate = false;
-            Object.FindObjectOfType<Camera>().transform.position = new float3(PlayerStats.Pos, -10);
-        }
+        //if (PlayerStats.ForceUpdate)
+        //{
+        //    PlayerStats.ForceUpdate = false;
+        //    Object.FindObjectOfType<Camera>().transform.position = new float3(PlayerStats.Pos, -10);
+        //}
 
-        PlayerStats.PreviousPos = PlayerStats.Pos;
+        //PlayerStats.PreviousPos = PlayerStats.Pos;
 
-        if (InputInfo.SprintPressed)
-        {
-            InputInfo.SprintPressed = false;
-            PlayerStats.Sprinting = !PlayerStats.Sprinting; // is there a more efficient way of writing this lol?
-        }
+        //if (InputInfo.SprintPressed)
+        //{
+        //    InputInfo.SprintPressed = false;
+        //    PlayerStats.Sprinting = !PlayerStats.Sprinting; // is there a more efficient way of writing this lol?
+        //}
 
-        float MaxSpeed;
+        //float MaxSpeed;
 
-        if (PlayerStats.Sprinting)
-        {
-            MaxSpeed = PlayerStats.SprintSpeed;
-        }
-        else
-        {
-            MaxSpeed = PlayerStats.WalkSpeed;
-        }
+        //if (PlayerStats.Sprinting)
+        //{
+        //    MaxSpeed = PlayerStats.SprintSpeed;
+        //}
+        //else
+        //{
+        //    MaxSpeed = PlayerStats.WalkSpeed;
+        //}
 
-        PlayerStats.Speed = math.lerp(0, MaxSpeed, math.clamp(InputInfo.TimeMovementInputHeldFor, 0, 1));
+        //PlayerStats.Speed = math.lerp(0, MaxSpeed, math.clamp(InputInfo.TimeMovementInputHeldFor, 0, 1));
 
-        if (PlayerStats.Speed == 0)
-        {
-            return;
-        }
+        //if (PlayerStats.Speed == 0)
+        //{
+        //    return;
+        //}
 
-        PlayerStats.HasMoved = true; // I think?
+        //PlayerStats.HasMoved = true; // I think?
 
-        PlayerStats.Pos += InputInfo.Movement * PlayerStats.Speed * SystemAPI.Time.DeltaTime;
+        //PlayerStats.Pos += InputInfo.Movement * PlayerStats.Speed * SystemAPI.Time.DeltaTime;
 
-        PlayerStats.Pos = math.clamp(PlayerStats.Pos, 0, float.MaxValue);
+        //PlayerStats.Pos = math.clamp(PlayerStats.Pos, 0, float.MaxValue);
 
-        Object.FindObjectOfType<Camera>().transform.position = new float3(PlayerStats.Pos, -10);
+        //Object.FindObjectOfType<Camera>().transform.position = new float3(PlayerStats.Pos, -10);
     }
 
     //public void OnStopRunning(ref SystemState state)

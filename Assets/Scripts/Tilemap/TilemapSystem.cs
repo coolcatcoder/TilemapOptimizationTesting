@@ -47,7 +47,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<TilemapSettingsData>();
-        state.RequireForUpdate<Stats>();
+        //state.RequireForUpdate<Stats>();
     }
 
     [BurstCompile]
@@ -70,16 +70,16 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
         ResetTilemapSettings(ref state);
 
-        ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
+        //ref Stats PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
         if (!DebugChunk0)
         {
-            PlayerStats.Pos = FindSafePos();
-            PlayerStats.ForceUpdate = true;
+            //PlayerStats.Pos = FindSafePos();
+            //PlayerStats.ForceUpdate = true;
         }
     }
 
-    public void OnUpdate(ref SystemState state)
+    public void OnUpdate(ref SystemState state) // todo, split into patterns. 1 mesh per pattern, then merge
     {
         Entity TilemapEntity = SystemAPI.GetSingletonEntity<TilemapSettingsData>();
 
@@ -113,9 +113,9 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             UnsafeUtility.MemClear(Indices.GetUnsafePtr(), Indices.Length * sizeof(uint));
         }
 
-        SimpleMesh<Vertex,uint> mesh = new SimpleMesh<Vertex, uint>(Allocator.Persistent)
+        SimpleMesh<Vertex, uint> mesh = new SimpleMesh<Vertex, uint>((uint)BlocksOnScreen * 4 + 4, (uint)BlocksOnScreen * 6 + 6, Allocator.Temp);
 
-        BurstUpdate(ref state, mesh, BlocksOnScreen);
+        //BurstUpdate(ref state, mesh, BlocksOnScreen);
 
         var TilemapToMeshJob = new TilemapToMesh()
         {
@@ -129,7 +129,7 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             BottomLeftOfScreen = BottomLeftPos
         };
 
-        JobHandle TilemapToMeshHandle = TilemapToMeshJob.ScheduleParallel(RenderAmount, 64, new JobHandle());
+        JobHandle TilemapToMeshHandle = TilemapToMeshJob.ScheduleParallel(BlocksOnScreen, 64, new JobHandle());
 
         TilemapToMeshHandle.Complete(); // do the system handle nonsense sooner rather than later!!!!!!!!!
 
@@ -144,10 +144,10 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
             baseVertex = 0, // for now this is correct, but will be an issue eventually
             bounds = SubMeshBounds,
             firstVertex = 0,
-            indexCount = 6 * RenderAmount + 6, // 2 triangles with each triangle needing 3 then that for every block.
+            indexCount = 6 * BlocksOnScreen + 6, // 2 triangles with each triangle needing 3 then that for every block.
             indexStart = 0, //potentially lol
             topology = MeshTopology.Triangles, // 3 indices per face
-            vertexCount = 4 * RenderAmount + 4
+            vertexCount = 4 * BlocksOnScreen + 4
         };
 
         MeshData.SetSubMesh(0, SubMeshInfo, MeshUpdateFlags.Default);
@@ -167,46 +167,46 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
         mesh.Dispose();
     }
 
-    [BurstCompile]
-    public void BurstUpdate(ref SystemState state, SimpleMesh<Vertex,uint> mesh, int BlocksOnScreen)
-    {
-        if (DebugChunk0)
-        {
-            ResetTilemapSettings(ref state);
+    //[BurstCompile]
+    //public void BurstUpdate(ref SystemState state, SimpleMesh<Vertex,uint> mesh, int BlocksOnScreen)
+    //{
+    //    if (DebugChunk0)
+    //    {
+    //        ResetTilemapSettings(ref state);
 
-            ChunksGenerated[0] = false;
+    //        ChunksGenerated[0] = false;
 
-            GenerateChunk(0).Complete();
-        }
+    //        GenerateChunk(0).Complete();
+    //    }
 
-        ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
+    //    //ref var PlayerStats = ref SystemAPI.GetSingletonRW<Stats>().ValueRW;
 
-        int2 PlayerChunkPos = TilemapArray.ChunkPosFromFullPos((int2)PlayerStats.Pos);
-        int PlayerChunkIndex = StorageMethods.IndexFromPos(PlayerChunkPos, TilemapArray.ChunkGridWidth);
+    //    int2 PlayerChunkPos = TilemapArray.ChunkPosFromFullPos((int2)PlayerStats.Pos);
+    //    int PlayerChunkIndex = StorageMethods.IndexFromPos(PlayerChunkPos, TilemapArray.ChunkGridWidth);
 
-        if (PlayerStats.HasMoved && !DebugChunk0)
-        {
-            PlayerStats.HasMoved = false;
+    //    if (PlayerStats.HasMoved && !DebugChunk0)
+    //    {
+    //        PlayerStats.HasMoved = false;
 
-            CheckForCollisions(ref PlayerStats);
+    //        CheckForCollisions(ref PlayerStats);
 
-            if (!ChunksGenerated[PlayerChunkIndex])
-            {
-                GenerateChunk(PlayerChunkPos).Complete();
-            }
+    //        if (!ChunksGenerated[PlayerChunkIndex])
+    //        {
+    //            GenerateChunk(PlayerChunkPos).Complete();
+    //        }
 
-            GenerateChunksAroundPlayer((int2)PlayerStats.Pos);
-        }
+    //        GenerateChunksAroundPlayer((int2)PlayerStats.Pos);
+    //    }
 
-        RenderPlayer(ref PlayerStats, Vertices, Indices, RenderAmount);
+    //    RenderPlayer(ref PlayerStats, mesh, BlocksOnScreen);
 
-        if (!ChunksGenerated[PlayerChunkIndex])
-        {
-            Debug.Log("Something has gone terribly wrong!");
-            Debug.Log($"ChunkPos {PlayerChunkPos} , ChunkIndex {PlayerChunkIndex}");
-            return;
-        }
-    }
+    //    if (!ChunksGenerated[PlayerChunkIndex])
+    //    {
+    //        Debug.Log("Something has gone terribly wrong!");
+    //        Debug.Log($"ChunkPos {PlayerChunkPos} , ChunkIndex {PlayerChunkIndex}");
+    //        return;
+    //    }
+    //}
 
     [BurstCompile]
     public void OnStopRunning(ref SystemState state)
@@ -497,33 +497,33 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     #region Mesh Functions, Jobs, and structs
 
-    public void RenderPlayer(ref Stats PlayerStats, NativeArray<Vertex> Vertices, NativeArray<uint> Indices, int RenderAmount)
-    {
-        int VertexStart = RenderAmount * 4; // if every tile takes up 4 vertices then we use i * 4 to get the correct starting vertex
-        int IndexStart = RenderAmount * 6; // read above and replace some words, and you might understand my nonsense
+    //public void RenderPlayer(ref Stats PlayerStats, SimpleMesh<Vertex,uint> mesh, int BlocksOnScreen)
+    //{
+    //    int VertexStart = BlocksOnScreen * 4; // if every tile takes up 4 vertices then we use i * 4 to get the correct starting vertex
+    //    int IndexStart = BlocksOnScreen * 6; // read above and replace some words, and you might understand my nonsense
 
-        UnsafeElementAt(Vertices, VertexStart).Pos = new float3(PlayerStats.Pos, 0) + new float3(0.5f * PlayerStats.Size.x, 0.5f * PlayerStats.Size.y, 0); // top right
-        UnsafeElementAt(Vertices, VertexStart).UV = new float2(SpriteWidth, SpriteHeight);
+    //    UnsafeElementAt(mesh.Vertices, VertexStart).Pos = new float3(PlayerStats.Pos, 0) + new float3(0.5f * PlayerStats.Size.x, 0.5f * PlayerStats.Size.y, 0); // top right
+    //    UnsafeElementAt(mesh.Vertices, VertexStart).UV = new float2(SpriteWidth, SpriteHeight);
 
-        UnsafeElementAt(Vertices, VertexStart + 1).Pos = new float3(PlayerStats.Pos, 0) + new float3(0.5f * PlayerStats.Size.x, -0.5f * PlayerStats.Size.y, 0); // top left
-        UnsafeElementAt(Vertices, VertexStart + 1).UV = new float2(0, SpriteHeight);
+    //    UnsafeElementAt(mesh.Vertices, VertexStart + 1).Pos = new float3(PlayerStats.Pos, 0) + new float3(0.5f * PlayerStats.Size.x, -0.5f * PlayerStats.Size.y, 0); // top left
+    //    UnsafeElementAt(mesh.Vertices, VertexStart + 1).UV = new float2(0, SpriteHeight);
 
-        UnsafeElementAt(Vertices, VertexStart + 2).Pos = new float3(PlayerStats.Pos, 0) + new float3(-0.5f * PlayerStats.Size.x, 0.5f * PlayerStats.Size.y, 0); // bottom right
-        UnsafeElementAt(Vertices, VertexStart + 2).UV = new float2(SpriteWidth, 0);
+    //    UnsafeElementAt(mesh.Vertices, VertexStart + 2).Pos = new float3(PlayerStats.Pos, 0) + new float3(-0.5f * PlayerStats.Size.x, 0.5f * PlayerStats.Size.y, 0); // bottom right
+    //    UnsafeElementAt(mesh.Vertices, VertexStart + 2).UV = new float2(SpriteWidth, 0);
 
-        UnsafeElementAt(Vertices, VertexStart + 3).Pos = new float3(PlayerStats.Pos, 0) + new float3(-0.5f * PlayerStats.Size.x, -0.5f * PlayerStats.Size.y, 0); // bottom left
-        UnsafeElementAt(Vertices, VertexStart + 3).UV = 0;
+    //    UnsafeElementAt(mesh.Vertices, VertexStart + 3).Pos = new float3(PlayerStats.Pos, 0) + new float3(-0.5f * PlayerStats.Size.x, -0.5f * PlayerStats.Size.y, 0); // bottom left
+    //    UnsafeElementAt(mesh.Vertices, VertexStart + 3).UV = 0;
 
-        uint UVertexStart = (uint)VertexStart;
+    //    uint UVertexStart = (uint)VertexStart;
 
-        Indices[IndexStart] = UVertexStart;
-        Indices[IndexStart + 1] = UVertexStart + 1;
-        Indices[IndexStart + 2] = UVertexStart + 2;
+    //    mesh.Indices[IndexStart] = UVertexStart;
+    //    mesh.Indices[IndexStart + 1] = UVertexStart + 1;
+    //    mesh.Indices[IndexStart + 2] = UVertexStart + 2;
 
-        Indices[IndexStart + 3] = UVertexStart + 1;
-        Indices[IndexStart + 4] = UVertexStart + 3;
-        Indices[IndexStart + 5] = UVertexStart + 2;
-    }
+    //    mesh.Indices[IndexStart + 3] = UVertexStart + 1;
+    //    mesh.Indices[IndexStart + 4] = UVertexStart + 3;
+    //    mesh.Indices[IndexStart + 5] = UVertexStart + 2;
+    //}
 
     [BurstCompile]
     struct TilemapToMesh : IJobFor
@@ -617,62 +617,62 @@ public partial struct TilemapSystem : ISystem, ISystemStartStop
 
     #region Collision Stuff
 
-    [BurstCompile]
-    public void CheckForCollisions(ref Stats PlayerStats)
-    {
-        float2 PlayerPos = PlayerStats.Pos;
-        float2 PlayerSize = PlayerStats.Size;
+    //[BurstCompile]
+    //public void CheckForCollisions(ref Stats PlayerStats)
+    //{
+    //    float2 PlayerPos = PlayerStats.Pos;
+    //    float2 PlayerSize = PlayerStats.Size;
 
-        int2 ClosestBlockPos = (int2)math.round(PlayerPos);
+    //    int2 ClosestBlockPos = (int2)math.round(PlayerPos);
 
-        for (int i = 0; i < 9; i++)
-        {
-            int2 OffsetPos = StorageMethods.PosFromIndex(i, 3) - 1;
+    //    for (int i = 0; i < 9; i++)
+    //    {
+    //        int2 OffsetPos = StorageMethods.PosFromIndex(i, 3) - 1;
 
-            int2 BlockPos = ClosestBlockPos + OffsetPos;
+    //        int2 BlockPos = ClosestBlockPos + OffsetPos;
 
-            BlockPos = math.clamp(BlockPos, 0, int.MaxValue);
+    //        BlockPos = math.clamp(BlockPos, 0, int.MaxValue);
 
-            int2 ChunkPos = TilemapArray.ChunkPosFromFullPos(BlockPos);
-            int ChunkIndex = StorageMethods.IndexFromPos(ChunkPos, TilemapArray.ChunkGridWidth);
-            int BlockIndexStart = ChunkIndex * TilemapArray.ChunkWidthSquared;
+    //        int2 ChunkPos = TilemapArray.ChunkPosFromFullPos(BlockPos);
+    //        int ChunkIndex = StorageMethods.IndexFromPos(ChunkPos, TilemapArray.ChunkGridWidth);
+    //        int BlockIndexStart = ChunkIndex * TilemapArray.ChunkWidthSquared;
 
-            int2 WorldPosStart = TilemapArray.FullPosFromChunkPos(ChunkPos);
+    //        int2 WorldPosStart = TilemapArray.FullPosFromChunkPos(ChunkPos);
 
-            int2 LocalPos = BlockPos - WorldPosStart;
+    //        int2 LocalPos = BlockPos - WorldPosStart;
 
-            int LocalIndex = StorageMethods.IndexFromPos(LocalPos, TilemapArray.ChunkWidth);
+    //        int LocalIndex = StorageMethods.IndexFromPos(LocalPos, TilemapArray.ChunkWidth);
 
-            int BlockIndex = BlockIndexStart + LocalIndex;
+    //        int BlockIndex = BlockIndexStart + LocalIndex;
 
-            byte BlockTypeIndex = TilemapArray.FullArray[BlockIndex];
+    //        byte BlockTypeIndex = TilemapArray.FullArray[BlockIndex];
 
-            if (BlockTypeIndex == 0) // you can't collide with nothing
-            {
-                continue;
-            }
+    //        if (BlockTypeIndex == 0) // you can't collide with nothing
+    //        {
+    //            continue;
+    //        }
 
-            BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
+    //        BlockType BlockInfo = BlockTypes.Value[BlockTypeIndex];
 
-            if (IsColliding(PlayerPos + PlayerSize * -0.5f + 0.5f, PlayerSize, BlockPos + BlockInfo.CollisionSize * -0.5f + 0.5f, BlockInfo.CollisionSize)) // aabb usually expect pos to be the bottom left corner of the sprite, which is not true for us, hence the weird multiplication of positions and stuff
-            {
-                if (BlockInfo.StrengthToCross < PlayerStats.Strength)
-                {
-                    if (BlockInfo.Behaviour.HasFlag(CollisionBehaviour.Consume))
-                    {
-                        TilemapArray.FullArray[BlockIndex] = 0;
-                    }
+    //        if (IsColliding(PlayerPos + PlayerSize * -0.5f + 0.5f, PlayerSize, BlockPos + BlockInfo.CollisionSize * -0.5f + 0.5f, BlockInfo.CollisionSize)) // aabb usually expect pos to be the bottom left corner of the sprite, which is not true for us, hence the weird multiplication of positions and stuff
+    //        {
+    //            if (BlockInfo.StrengthToCross < PlayerStats.Strength)
+    //            {
+    //                if (BlockInfo.Behaviour.HasFlag(CollisionBehaviour.Consume))
+    //                {
+    //                    TilemapArray.FullArray[BlockIndex] = 0;
+    //                }
 
-                    PlayerStats += BlockInfo.StatsChange;
+    //                PlayerStats += BlockInfo.StatsChange;
 
-                    continue;
-                }
+    //                continue;
+    //            }
 
-                PlayerStats.Pos = PlayerStats.PreviousPos;
-                return;
-            }
-        }
-    }
+    //            PlayerStats.Pos = PlayerStats.PreviousPos;
+    //            return;
+    //        }
+    //    }
+    //}
 
     public static bool IsColliding(float2 Pos1, float2 Size1, float2 Pos2, float2 Size2)
     {

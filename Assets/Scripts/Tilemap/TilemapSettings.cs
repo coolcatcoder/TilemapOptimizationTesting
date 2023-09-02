@@ -62,16 +62,16 @@ public class TilemapBaker : Baker<TilemapSettings>
                 CollisionSize = BT.CollisionSize,
                 Behaviour = BT.Behaviour,
                 StrengthToCross = BT.StrengthToCross,
-                StatsChange = new Stats()
-                {
-                    Size = BT.StatsChange.Size,
-                    Health = BT.StatsChange.Health,
-                    Stamina = BT.StatsChange.Stamina,
-                    Strength = BT.StatsChange.Strength,
-                    Speed = BT.StatsChange.Speed,
-                    SprintSpeed = BT.StatsChange.SprintSpeed,
-                    WalkSpeed = BT.StatsChange.WalkSpeed
-                },
+                //StatsChange = new Stats()
+                //{
+                //    Size = BT.StatsChange.Size,
+                //    Health = BT.StatsChange.Health,
+                //    Stamina = BT.StatsChange.Stamina,
+                //    Strength = BT.StatsChange.Strength,
+                //    Speed = BT.StatsChange.Speed,
+                //    SprintSpeed = BT.StatsChange.SprintSpeed,
+                //    WalkSpeed = BT.StatsChange.WalkSpeed
+                //},
                 MinNoise = BT.MinNoise,
                 MaxNoise = BT.MaxNoise,
                 Chance = BT.PercentChance/100
@@ -159,7 +159,7 @@ public struct BlockType
 
     public uint StrengthToCross;
 
-    public Stats StatsChange;
+    //public Stats StatsChange;
 
     public float MinNoise;
     public float MaxNoise;
