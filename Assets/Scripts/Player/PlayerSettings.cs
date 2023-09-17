@@ -31,8 +31,6 @@ public struct PlayerData : IComponentData
     public float SprintSpeed;
     public float WalkSpeed;
 
-    public bool HasMoved;
-
     public Statistics Stats;
 
     public float3 BottomLeftPosOfScreen;

@@ -490,6 +490,89 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 1
+--- !u!1 &414722387
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 414722388}
+  - component: {fileID: 414722390}
+  - component: {fileID: 414722389}
+  m_Layer: 0
+  m_Name: Example Map Object (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &414722388
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414722387}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2008307902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &414722389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414722387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26fec99bc7edede48b1bf08d21d7f9ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RenderingSize:
+    x: 1
+    y: 1
+  CollisionSize:
+    x: 1
+    y: 1
+  PercentChance: 100
+  MinNoise: 0.5
+  MaxNoise: 0.7
+  Seed: 3
+  Scale: 0.8
+--- !u!114 &414722390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 414722387}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a67e46c96776ef4c8c0451701628a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MapObjectSprite: 4
+  Depth: 1
+  Pattern: 2
+  Behaviour: 1
+  StrengthToCross: 2
+  Stats:
+    RenderSize:
+      x: 0
+      y: 0
+    CollisionSize:
+      x: 0
+      y: 0
+    Health: 0
+    Stamina: 0
+    Strength: 0
 --- !u!1 &534422224
 GameObject:
   m_ObjectHideFlags: 0
@@ -939,11 +1022,94 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a67e46c96776ef4c8c0451701628a5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MapObjectSprite: 3
+  MapObjectSprite: 5
   Depth: 2
   Pattern: 1
   Behaviour: 1
   StrengthToCross: 1
+  Stats:
+    RenderSize:
+      x: 0
+      y: 0
+    CollisionSize:
+      x: 0
+      y: 0
+    Health: 0
+    Stamina: 0
+    Strength: 0
+--- !u!1 &1999810788
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1999810789}
+  - component: {fileID: 1999810791}
+  - component: {fileID: 1999810790}
+  m_Layer: 0
+  m_Name: Example Map Object (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1999810789
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999810788}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2008307902}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1999810790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999810788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26fec99bc7edede48b1bf08d21d7f9ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RenderingSize:
+    x: 1
+    y: 1
+  CollisionSize:
+    x: 1
+    y: 1
+  PercentChance: 100
+  MinNoise: 0.5
+  MaxNoise: 0.7
+  Seed: 3
+  Scale: 0.8
+--- !u!114 &1999810791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999810788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a67e46c96776ef4c8c0451701628a5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MapObjectSprite: 4
+  Depth: 1
+  Pattern: 2
+  Behaviour: 1
+  StrengthToCross: 2
   Stats:
     RenderSize:
       x: 0
@@ -1004,6 +1170,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1394671306}
+  - {fileID: 1999810789}
+  - {fileID: 414722388}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807

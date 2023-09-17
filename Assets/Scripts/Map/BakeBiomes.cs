@@ -7,6 +7,8 @@ using UnityEditor;
 
 public class BakeBiomes : MonoBehaviour
 {
+    public int2 SpriteSheetSize = 1;
+
     public bool Bake;
 
     public float2 DebugPos;
@@ -85,7 +87,7 @@ public class BiomesBaker : Baker<BakeBiomes>
         ref var Root = ref Builder.ConstructRoot<BiomesAndMapObjectsBlob>();
 
         var Biomes = Builder.Allocate(ref Root.Biomes, BiomesMono.Length);
-        //var MapObjects = Builder.Allocate(ref Root.MapObjects, UnityEngine.Object.FindObjectsOfType<MapObjectMono>().Length); can't exist, read other comment
+        
         var RandomPatternMapObjects = Builder.Allocate(ref Root.RandomPatternMapObjects, UnityEngine.Object.FindObjectsOfType<RandomPatternMapObjectMono>().Length);
         var SimplexPatternMapObjects = Builder.Allocate(ref Root.SimplexPatternMapObjects, UnityEngine.Object.FindObjectsOfType<SimplexPatternMapObjectMono>().Length);
         var SimplexSmoothedPatternMapObjects = Builder.Allocate(ref Root.SimplexSmoothedPatternMapObjects, UnityEngine.Object.FindObjectsOfType<SimplexSmoothedPatternMapObjectMono>().Length);
@@ -93,7 +95,6 @@ public class BiomesBaker : Baker<BakeBiomes>
         byte RandomPatternMapObjectIndex = 0;
         byte SimplexPatternMapObjectIndex = 0;
         byte SimplexSmoothedPatternMapObjectIndex = 0;
-        byte SimplexScalesMapObjectIndex = 0;
 
         for (int i = 0; i < BiomesMono.Length; i++)
         {
@@ -112,9 +113,6 @@ public class BiomesBaker : Baker<BakeBiomes>
             CurrentBiome.SimplexSmoothedPatternStartingIndex = SimplexSmoothedPatternMapObjectIndex;
             CurrentBiome.SimplexSmoothedPatternLength = BiomesMono[i].GetComponentsInChildren<SimplexSmoothedPatternMapObjectMono>().Length;
 
-            CurrentBiome.SimplexScalesStartingIndex = SimplexScalesMapObjectIndex;
-            //CurrentBiome.SimplexScalesLength = BiomesMono[i].GetComponentsInChildren<RandomPatternMapObjectMono>().Length; // good luck fixing this asap
-
             for (int ci = 0; ci < Children.Length; ci++)
             {
                 var Child = Children[ci];
@@ -127,7 +125,7 @@ public class BiomesBaker : Baker<BakeBiomes>
                         {
                             Data = new MapObject()
                             {
-                                UV = 0, // fix asap
+                                UV = new float2(1f/authoring.SpriteSheetSize.x * (Child.MapObjectSprite-1),0), // experimental fix? Basically if the entire sprite sheet is 1 unit long, then we do 1 / LengthOfSpriteSheet to get the width of 1 sprite. We then multiply that by the sprite number - 1 to account for starting from 0
                                 Depth = Child.Depth,
                                 Pattern = Child.Pattern,
                                 Behaviour = Child.Behaviour,
@@ -168,7 +166,7 @@ public class BiomesBaker : Baker<BakeBiomes>
 
                             Seed = Unity.Mathematics.Random.CreateFromIndex(SimplexPatternMapObjectInfo.Seed).NextUInt(),
 
-                            Scale = 0 // fix asap
+                            Scale = SimplexPatternMapObjectInfo.Scale // there has to be a better way...
                         };
 
                         SimplexPatternMapObjectIndex++;
@@ -195,7 +193,7 @@ public class BiomesBaker : Baker<BakeBiomes>
 
                             Seed = Unity.Mathematics.Random.CreateFromIndex(SimplexSmoothedPatternMapObjectInfo.Seed).NextUInt(),
 
-                            Scale = 0 // fix asap
+                            Scale = SimplexSmoothedPatternMapObjectInfo.Scale
                         };
 
                         SimplexSmoothedPatternMapObjectIndex++;
@@ -266,14 +264,13 @@ public struct Biome // having different simplex scales could be nice, should we 
     public byte RandomPatternStartingIndex;
     public int RandomPatternLength;
 
+    // simplex stuff will have to be looped through due to each one having a different scale and seed...
+
     public byte SimplexPatternStartingIndex;
     public int SimplexPatternLength;
 
     public byte SimplexSmoothedPatternStartingIndex;
     public int SimplexSmoothedPatternLength;
-
-    public byte SimplexScalesStartingIndex; // highly experimental
-    public int SimplexScalesLength;
 }
 
 [System.Serializable]
@@ -320,7 +317,7 @@ public struct SimplexPatternMapObject
 
     public uint Seed; // this should be some insane uint created during baking from the boring seed in the mono
 
-    public uint Scale; // index into the scale array
+    public float Scale;
 }
 
 [System.Serializable]
@@ -335,5 +332,5 @@ public struct SimplexSmoothedPatternMapObject
 
     public uint Seed; // Creating a Random from this number should give a consistent seed for each number. So for blocks that want the same simplex pattern as eachother, you use the same seed. If you don't want them to have to the same pattern, use a different seed.
 
-    public uint Scale; // index into the scale array
+    public float Scale; // index into the scale array
 }

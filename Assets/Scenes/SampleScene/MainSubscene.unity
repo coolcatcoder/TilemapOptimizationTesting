@@ -152,6 +152,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4613e00970609c8408c5f47706dcb85a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SpriteSheetSize:
+    x: 5
+    y: 1
   Bake: 1
   DebugPos:
     x: 0
@@ -169,8 +172,6 @@ MonoBehaviour:
     SimplexPatternLength: 0
     SimplexSmoothedPatternStartingIndex: 0
     SimplexSmoothedPatternLength: 0
-    SimplexScalesStartingIndex: 0
-    SimplexScalesLength: 0
   - Size:
       x: 1
       y: 2
@@ -180,15 +181,13 @@ MonoBehaviour:
     RandomPatternStartingIndex: 1
     RandomPatternLength: 1
     SimplexPatternStartingIndex: 0
-    SimplexPatternLength: 0
+    SimplexPatternLength: 2
     SimplexSmoothedPatternStartingIndex: 0
     SimplexSmoothedPatternLength: 0
-    SimplexScalesStartingIndex: 0
-    SimplexScalesLength: 0
   RandomPatternMapObjects:
   - Data:
       UV:
-        x: 0
+        x: 0.4
         y: 0
       Depth: 2
       Pattern: 1
@@ -213,7 +212,7 @@ MonoBehaviour:
     Chance: 0.5
   - Data:
       UV:
-        x: 0
+        x: 0.8
         y: 0
       Depth: 2
       Pattern: 1
@@ -236,7 +235,65 @@ MonoBehaviour:
       x: 0.8
       y: 0.8
     Chance: 0.5
-  SimplexPatternMapObjects: []
+  SimplexPatternMapObjects:
+  - Data:
+      UV:
+        x: 0
+        y: 0
+      Depth: 1
+      Pattern: 2
+      Behaviour: 1
+      StrengthToCross: 2
+      Stats:
+        RenderSize:
+          x: 0
+          y: 0
+        CollisionSize:
+          x: 0
+          y: 0
+        Health: 0
+        Stamina: 0
+        Strength: 0
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Chance: 1
+    MinNoise: 0.5
+    MaxNoise: 0.7
+    Seed: 924495688
+    Scale: 0.8
+  - Data:
+      UV:
+        x: 0
+        y: 0
+      Depth: 1
+      Pattern: 2
+      Behaviour: 1
+      StrengthToCross: 2
+      Stats:
+        RenderSize:
+          x: 0
+          y: 0
+        CollisionSize:
+          x: 0
+          y: 0
+        Health: 0
+        Stamina: 0
+        Strength: 0
+    RenderingSize:
+      x: 1
+      y: 1
+    CollisionSize:
+      x: 1
+      y: 1
+    Chance: 1
+    MinNoise: 0.5
+    MaxNoise: 0.7
+    Seed: 924495688
+    Scale: 0.8
   SimplexSmoothedPatternMapObjects: []
 --- !u!4 &88799168
 Transform:

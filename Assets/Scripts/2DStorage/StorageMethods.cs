@@ -18,4 +18,9 @@ public static partial class StorageMethods
     {
         return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
     }
+
+    public static float2 Middle(float2 a, float2 b)
+    {
+        return (a + b) / 2;
+    }
 }
